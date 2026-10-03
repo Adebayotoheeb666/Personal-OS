@@ -1,0 +1,6 @@
+{
+  "name": "AetherOS - Personal Operating System & AI Agent",
+  "description": "A persistent, context-aware Personal Operating System powered by specialized AI agents, world modeling, project memory, execution engine, interactive knowledge graph, and approval-gated self-improvement.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
