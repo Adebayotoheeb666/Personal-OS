@@ -8,8 +8,11 @@ import {
   ExternalLink,
   Layers,
   Search,
+  Activity,
+  GitBranch,
 } from 'lucide-react';
 import { useAgent } from '../context/AgentContext';
+import { KnowledgeClusterGraph } from './KnowledgeClusterGraph';
 
 interface GraphNode {
   id: string;
@@ -191,6 +194,7 @@ export const KnowledgeGraphView: React.FC = () => {
   const { sendMessage } = useAgent();
   const [selectedNode, setSelectedNode] = useState<GraphNode>(GRAPH_NODES[0]);
   const [filterType, setFilterType] = useState<string>('all');
+  const [viewPerspective, setViewPerspective] = useState<'cluster' | 'entities' | 'both'>('cluster');
 
   const filteredNodes = GRAPH_NODES.filter((n) => {
     if (filterType !== 'all' && n.type !== filterType) return false;
@@ -199,58 +203,118 @@ export const KnowledgeGraphView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-        <div>
-          <div className="flex items-center space-x-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <Network className="w-4 h-4 text-indigo-400" />
-            <span>Interactive Knowledge Graph &amp; Reuse Detection</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Ontological Entity Graph &amp; Cross-Project Synergies
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Visualizing relationships between your goals, projects, skills, knowledge, decisions, and people.
-            Highlighting identified reuse opportunities across ventures.
-          </p>
+      {/* Top Navigation & Perspective Switcher Ribbon */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-xl p-3 sm:px-5 sm:py-3.5 shadow-sm">
+        <div className="flex items-center space-x-2">
+          <Share2 className="w-4 h-4 text-cyan-400" />
+          <span className="text-xs font-bold text-white uppercase tracking-wider">
+            Knowledge Graph Perspectives:
+          </span>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex flex-wrap gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+        {/* View Mode Switcher */}
+        <div className="flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs">
           <button
-            onClick={() => setFilterType('all')}
-            className={`px-2.5 py-1 rounded cursor-pointer ${
-              filterType === 'all' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+            type="button"
+            onClick={() => setViewPerspective('cluster')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+              viewPerspective === 'cluster'
+                ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-sm shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            All Entities
+            <Activity className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Knowledge Clusters (Recharts Force Graph)</span>
           </button>
+
           <button
-            onClick={() => setFilterType('project')}
-            className={`px-2.5 py-1 rounded cursor-pointer ${
-              filterType === 'project' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+            type="button"
+            onClick={() => setViewPerspective('entities')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+              viewPerspective === 'entities'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            Projects
+            <GitBranch className="w-3.5 h-3.5 text-purple-300" />
+            <span>Entity Reuse Map (SVG)</span>
           </button>
+
           <button
-            onClick={() => setFilterType('skill')}
-            className={`px-2.5 py-1 rounded cursor-pointer ${
-              filterType === 'skill' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+            type="button"
+            onClick={() => setViewPerspective('both')}
+            className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+              viewPerspective === 'both'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-500 hover:text-white'
             }`}
           >
-            Skills / Tech
-          </button>
-          <button
-            onClick={() => setFilterType('knowledge')}
-            className={`px-2.5 py-1 rounded cursor-pointer ${
-              filterType === 'knowledge' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Knowledge &amp; Decisions
+            <Layers className="w-3.5 h-3.5" />
+            <span>Combined View</span>
           </button>
         </div>
       </div>
+
+      {/* 1. Knowledge Cluster Visualization using Recharts (Requirement 4) */}
+      {(viewPerspective === 'cluster' || viewPerspective === 'both') && (
+        <KnowledgeClusterGraph />
+      )}
+
+      {/* 2. Detailed Ontological Entity Graph and Synergy Inspector */}
+      {(viewPerspective === 'entities' || viewPerspective === 'both') && (
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+            <div>
+              <div className="flex items-center space-x-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                <Network className="w-4 h-4 text-indigo-400" />
+                <span>Interactive Knowledge Graph &amp; Reuse Detection</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Ontological Entity Graph &amp; Cross-Project Synergies
+              </h1>
+              <p className="text-xs text-slate-400 mt-1">
+                Visualizing relationships between your goals, projects, skills, knowledge, decisions, and people.
+                Highlighting identified reuse opportunities across ventures.
+              </p>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex flex-wrap gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+              <button
+                onClick={() => setFilterType('all')}
+                className={`px-2.5 py-1 rounded cursor-pointer ${
+                  filterType === 'all' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                All Entities
+              </button>
+              <button
+                onClick={() => setFilterType('project')}
+                className={`px-2.5 py-1 rounded cursor-pointer ${
+                  filterType === 'project' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Projects
+              </button>
+              <button
+                onClick={() => setFilterType('skill')}
+                className={`px-2.5 py-1 rounded cursor-pointer ${
+                  filterType === 'skill' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Skills / Tech
+              </button>
+              <button
+                onClick={() => setFilterType('knowledge')}
+                className={`px-2.5 py-1 rounded cursor-pointer ${
+                  filterType === 'knowledge' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Knowledge &amp; Decisions
+              </button>
+            </div>
+          </div>
 
       {/* Main Graph Canvas and Detail Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -415,5 +479,7 @@ export const KnowledgeGraphView: React.FC = () => {
         </div>
       </div>
     </div>
+  )}
+</div>
   );
 };

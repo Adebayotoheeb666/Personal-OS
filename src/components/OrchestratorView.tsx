@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useAgent } from '../context/AgentContext';
 import { SpecialistAgentType, OperatingMode } from '../types/agent';
+import { MemoryDecayMonitor } from './MemoryDecayMonitor';
 
 const AGENT_ICONS: Record<SpecialistAgentType, React.ReactNode> = {
   research: <Search className="w-4 h-4 text-sky-400" />,
@@ -161,6 +162,9 @@ export const OrchestratorView: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* Visual Indicator: Memory Decay Monitor for Stale Context Items */}
+      <MemoryDecayMonitor />
 
       {/* Autonomous Loop Step-by-Step Live Telemetry Trace */}
       {activeLoopTrace && (

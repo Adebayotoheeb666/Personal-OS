@@ -58,6 +58,7 @@ export const CommandCenter: React.FC<{
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState<'all' | 'projects' | 'tasks' | 'urgent'>('all');
+  const [projectSortBy, setProjectSortBy] = useState<'urgency' | 'progress' | 'deadline' | 'name'>('urgency');
   const [showSqlInspector, setShowSqlInspector] = useState(false);
   const [showMockDbInspector, setShowMockDbInspector] = useState(false);
   const [editingVisionProjectId, setEditingVisionProjectId] = useState<string | null>(null);
@@ -74,6 +75,60 @@ export const CommandCenter: React.FC<{
   const allTasks = worldModel.projects.flatMap((p) => p.tasks);
   const pendingTasks = allTasks.filter((t) => t.currentState === 'awaiting_approval');
   const blockedTasks = allTasks.filter((t) => t.currentState === 'blocked');
+
+  // Urgency scoring calculation for project dashboard
+  const calculateProjectUrgency = (project: (typeof worldModel.projects)[0]) => {
+    let score = 0;
+    const reasons: string[] = [];
+
+    // Deadline window
+    if (project.deadline) {
+      const diffHours = (new Date(project.deadline).getTime() - Date.now()) / (1000 * 60 * 60);
+      if (diffHours > 0 && diffHours <= 48) {
+        score += 8000 + (48 - diffHours) * 80;
+        reasons.push(`Due in <${Math.max(1, Math.round(diffHours))}h`);
+      } else if (diffHours > 0 && diffHours <= 168) {
+        score += 3000 + (168 - diffHours) * 15;
+        reasons.push(`Due in ${Math.round(diffHours / 24)}d`);
+      } else if (diffHours <= 0) {
+        score += 12000;
+        reasons.push('Overdue milestone');
+      }
+    }
+
+    // Task priority breakdown (uncompleted tasks)
+    const uncompleted = project.tasks.filter((t) => t.currentState !== 'completed');
+    const criticalTasks = uncompleted.filter((t) => t.priority === 'critical');
+    const highTasks = uncompleted.filter((t) => t.priority === 'high');
+    const highUrgency = uncompleted.filter((t) => t.urgency === 'High');
+
+    if (criticalTasks.length > 0) {
+      score += criticalTasks.length * 2500;
+      reasons.push(`${criticalTasks.length} Critical task${criticalTasks.length > 1 ? 's' : ''}`);
+    }
+    if (highTasks.length > 0) {
+      score += highTasks.length * 1200;
+      reasons.push(`${highTasks.length} High task${highTasks.length > 1 ? 's' : ''}`);
+    }
+    if (highUrgency.length > 0) {
+      score += highUrgency.length * 600;
+    }
+
+    if (project.health === 'blocked') {
+      score += 4000;
+      reasons.push('Health: Blocked');
+    } else if (project.health === 'at_risk') {
+      score += 2000;
+      reasons.push('Health: At Risk');
+    }
+
+    score += uncompleted.length * 50;
+
+    const urgencyLevel: 'Critical' | 'High' | 'Normal' =
+      score >= 5000 ? 'Critical' : score >= 2000 ? 'High' : 'Normal';
+
+    return { score, urgencyLevel, reasons };
+  };
 
   // Sorting function to display high-priority and high-urgency tasks first
   const sortTasksByPriorityAndUrgency = (tasks: ProjectTask[]): ProjectTask[] => {
@@ -102,21 +157,43 @@ export const CommandCenter: React.FC<{
     });
   };
 
-  // Filtered Active Projects based on Search Bar (matching name, vision, problem, architecture)
+  // Filtered & Sorted Active Projects based on Search Bar and Dashboard Urgency Sort
   const activeProjects = useMemo(() => {
-    const list = worldModel.projects.filter((p) => p.category === 'active');
-    if (!searchQuery.trim() || searchFilter === 'tasks') return list;
+    let list = worldModel.projects.filter((p) => p.category === 'active');
+    if (searchQuery.trim() && searchFilter !== 'tasks') {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.vision.toLowerCase().includes(q) ||
+          p.problem.toLowerCase().includes(q) ||
+          p.architecture.toLowerCase().includes(q) ||
+          p.features.some((f) => f.toLowerCase().includes(q))
+      );
+    }
 
-    const q = searchQuery.toLowerCase();
-    return list.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.vision.toLowerCase().includes(q) ||
-        p.problem.toLowerCase().includes(q) ||
-        p.architecture.toLowerCase().includes(q) ||
-        p.features.some((f) => f.toLowerCase().includes(q))
-    );
-  }, [worldModel.projects, searchQuery, searchFilter]);
+    return [...list].sort((a, b) => {
+      if (projectSortBy === 'urgency') {
+        return calculateProjectUrgency(b).score - calculateProjectUrgency(a).score;
+      }
+      if (projectSortBy === 'progress') {
+        const aCompleted = a.tasks.filter((t) => t.currentState === 'completed').length;
+        const bCompleted = b.tasks.filter((t) => t.currentState === 'completed').length;
+        const aRatio = a.tasks.length > 0 ? aCompleted / a.tasks.length : 0;
+        const bRatio = b.tasks.length > 0 ? bCompleted / b.tasks.length : 0;
+        return bRatio - aRatio;
+      }
+      if (projectSortBy === 'deadline') {
+        const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return aTime - bTime;
+      }
+      if (projectSortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      }
+      return 0;
+    });
+  }, [worldModel.projects, searchQuery, searchFilter, projectSortBy]);
 
   // Filtered Tasks based on Search Bar (matching objective, nextAction, owner, priority)
   const filteredTasks = useMemo(() => {
@@ -170,53 +247,7 @@ export const CommandCenter: React.FC<{
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Banner: Co-Founder Morning Briefing */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950/70 to-slate-900 border border-indigo-900/40 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="flex items-center space-x-2 text-indigo-400 font-semibold text-xs uppercase tracking-wider mb-1">
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span>Daily Operating Brief & Executive Command</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Good morning, {worldModel.identity.name}.
-            </h1>
-            <p className="text-slate-300 text-sm mt-1 max-w-2xl">
-              You have <strong className="text-amber-400">{pendingProposals.length + pendingTasks.length} consequential actions</strong> waiting behind approval gates. 
-              Active focus: <span className="text-indigo-300 font-medium">Enterprise Sales Pipeline</span> and <span className="text-sky-300 font-medium">EduCore AST Engine</span>.
-            </p>
-          </div>
-
-          {/* Quick Continuity Trigger Bar */}
-          <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium whitespace-nowrap pl-1">
-              Project Continuity:
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => handleQuickContinuity('sales')}
-                disabled={isThinking}
-                className="px-2.5 py-1 rounded-md bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-xs font-semibold border border-indigo-500/30 transition flex items-center space-x-1 cursor-pointer"
-              >
-                <span>"Continue sales agent"</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-              <button
-                onClick={() => handleQuickContinuity('educore')}
-                disabled={isThinking}
-                className="px-2.5 py-1 rounded-md bg-sky-600/30 hover:bg-sky-600/50 text-sky-300 text-xs font-semibold border border-sky-500/30 transition flex items-center space-x-1 cursor-pointer"
-              >
-                <span>"Where are we with EduCore?"</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Dashboard Summary KPI Component */}
+      {/* Dashboard Summary KPI Component (Hero Greeting + Due Soon + 4 Tactile Stat Cards) */}
       <DashboardSummary
         projects={worldModel.projects}
         allTasks={allTasks}
@@ -225,7 +256,40 @@ export const CommandCenter: React.FC<{
         onFilterProjects={() => setSearchFilter('projects')}
         onFilterAwaitingApproval={() => setSearchFilter('tasks')}
         onFilterUrgent={() => setSearchFilter('urgent')}
+        onTriggerAutoLoop={() => runAutonomousLoop('Execute full-cycle autonomous review and sync')}
       />
+
+      {/* Quick Project Continuity Recall Bar */}
+      <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-sm">
+        <div className="flex items-center space-x-2 text-slate-300">
+          <Zap className="w-4 h-4 text-amber-400" />
+          <span className="font-bold text-white uppercase tracking-wider text-[11px]">
+            Instant Context Continuity:
+          </span>
+          <span className="text-slate-400 hidden md:inline">
+            Hydrate working memory and architectural ADRs with 1-click
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => handleQuickContinuity('sales')}
+            disabled={isThinking}
+            className="px-3 py-1 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-semibold border border-indigo-500/40 transition flex items-center space-x-1 cursor-pointer"
+          >
+            <span>"Continue Sales Pipeline"</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => handleQuickContinuity('educore')}
+            disabled={isThinking}
+            className="px-3 py-1 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 text-xs font-semibold border border-cyan-500/40 transition flex items-center space-x-1 cursor-pointer"
+          >
+            <span>"Where are we with EduCore?"</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
 
       {/* Modular Search Bar Component (Phase 1 Dynamic Filter) */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
@@ -647,20 +711,80 @@ export const CommandCenter: React.FC<{
           </div>
 
           {/* Active Projects Health & Velocity */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <Layers className="w-5 h-5 text-indigo-400" />
-                <h2 className="text-base font-bold text-white tracking-wide">
-                  Active Projects &amp; System Velocity
-                </h2>
+          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <Layers className="w-5 h-5 text-indigo-400" />
+                  <h2 className="text-base font-bold text-white tracking-wide">
+                    Active Projects Dashboard
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold">
+                    {activeProjects.length} Active
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Visual progress calculated from completed/total tasks with multi-factor urgency sorting.
+                </p>
               </div>
-              <button
-                onClick={() => onNavigateToTab('world-model')}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
-              >
-                Inspect All 21 Project Attributes &rarr;
-              </button>
+
+              {/* Urgency & Dashboard Sort Controls */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-slate-400 font-medium mr-1 flex items-center gap-1">
+                  <Filter className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Sort By:</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setProjectSortBy('urgency')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer flex items-center space-x-1 border ${
+                    projectSortBy === 'urgency'
+                      ? 'bg-red-500/20 text-red-300 border-red-500/50 shadow-sm shadow-red-500/20'
+                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  <Zap className="w-3 h-3 text-red-400" />
+                  <span>Urgency</span>
+                  {projectSortBy === 'urgency' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse ml-0.5"></span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProjectSortBy('progress')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer flex items-center space-x-1 border ${
+                    projectSortBy === 'progress'
+                      ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-sm shadow-indigo-500/20'
+                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  <TrendingUp className="w-3 h-3 text-indigo-400" />
+                  <span>Progress</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProjectSortBy('deadline')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer flex items-center space-x-1 border ${
+                    projectSortBy === 'deadline'
+                      ? 'bg-sky-500/20 text-sky-300 border-sky-500/50'
+                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  <Clock className="w-3 h-3 text-sky-400" />
+                  <span>Deadline</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProjectSortBy('name')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer border ${
+                    projectSortBy === 'name'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/50'
+                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  Name
+                </button>
+              </div>
             </div>
 
             {activeProjects.length === 0 ? (
@@ -670,6 +794,11 @@ export const CommandCenter: React.FC<{
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {activeProjects.map((project) => {
+                  const totalTasks = project.tasks.length;
+                  const completedTasks = project.tasks.filter((t) => t.currentState === 'completed').length;
+                  const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                  const urgencyInfo = calculateProjectUrgency(project);
+
                   const diffHours = project.deadline
                     ? (new Date(project.deadline).getTime() - Date.now()) / (1000 * 60 * 60)
                     : 999;
@@ -679,40 +808,126 @@ export const CommandCenter: React.FC<{
                     <div
                       key={project.id}
                       className={`p-4 rounded-xl bg-slate-950 border transition flex flex-col justify-between ${
-                        isDueSoon
-                          ? 'border-red-500/50 shadow-md shadow-red-500/5'
+                        urgencyInfo.urgencyLevel === 'Critical'
+                          ? 'border-red-500/50 shadow-md shadow-red-500/10 ring-1 ring-red-500/30'
+                          : urgencyInfo.urgencyLevel === 'High'
+                          ? 'border-amber-500/40 hover:border-amber-500/60 shadow-sm'
                           : 'border-slate-800/80 hover:border-indigo-500/40'
                       }`}
                     >
                       <div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
+                        {/* Top Badges: Urgency, Deadline Alert, Health */}
+                        <div className="flex items-center justify-between gap-1 mb-2">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {/* Visual Urgency Badge */}
+                            <span
+                              className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                                urgencyInfo.urgencyLevel === 'Critical'
+                                  ? 'bg-red-500/25 text-red-300 border-red-500/50 animate-pulse'
+                                  : urgencyInfo.urgencyLevel === 'High'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                  : 'bg-slate-800 text-slate-300 border-slate-700'
+                              }`}
+                            >
+                              {urgencyInfo.urgencyLevel === 'Critical' ? (
+                                <AlertTriangle className="w-3 h-3 text-red-400" />
+                              ) : urgencyInfo.urgencyLevel === 'High' ? (
+                                <Clock className="w-3 h-3 text-amber-400" />
+                              ) : (
+                                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              )}
+                              <span>{urgencyInfo.urgencyLevel} Urgency</span>
+                            </span>
+
                             {isDueSoon && (
-                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-300 bg-red-500/25 px-2 py-0.5 rounded-full border border-red-500/50 animate-pulse">
-                                Due &lt;{Math.max(1, Math.round(diffHours))}h
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-300 bg-red-500/25 px-2 py-0.5 rounded-full border border-red-500/50">
+                                &lt;{Math.max(1, Math.round(diffHours))}h
                               </span>
                             )}
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                              {project.health}
-                            </span>
                           </div>
-                          <span className="text-xs font-bold text-slate-300">{project.progress}%</span>
+
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            {project.health}
+                          </span>
                         </div>
 
-                        <h3 className="font-semibold text-white text-sm mt-2 line-clamp-1">{project.name}</h3>
+                        {/* Project Name & Vision */}
+                        <h3 className="font-semibold text-white text-sm line-clamp-1">{project.name}</h3>
                         <p className="text-xs text-slate-400 mt-1 line-clamp-2">{project.vision}</p>
+
+                        {/* Urgency Trigger Reasons Pill */}
+                        {urgencyInfo.reasons.length > 0 && (
+                          <div className="mt-2 text-[10px] text-slate-400 flex items-center gap-1 flex-wrap">
+                            <span className="text-slate-500 uppercase font-semibold">Drivers:</span>
+                            {urgencyInfo.reasons.slice(0, 2).map((r, i) => (
+                              <span key={i} className="px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                                {r}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
-                      <div className="mt-4 pt-3 border-t border-slate-800/80">
-                        <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
+                      {/* Visual Progress Bar Section (Completed / Total Tasks) */}
+                      <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-slate-300 flex items-center gap-1">
+                            <CheckSquare className="w-3.5 h-3.5 text-indigo-400" />
+                            <span>Task Progress:</span>
+                          </span>
+                          <span className="font-bold text-white font-mono">
+                            {completedTasks}/{totalTasks} ({taskCompletionRate}%)
+                          </span>
+                        </div>
+
+                        {/* Visual Progress Bar Container */}
+                        <div className="w-full bg-slate-900 border border-slate-800 h-2.5 rounded-full overflow-hidden p-0.5 shadow-inner">
                           <div
-                            className="bg-indigo-500 h-full rounded-full transition-all duration-500"
-                            style={{ width: `${project.progress}%` }}
+                            className={`h-full rounded-full transition-all duration-500 ease-out ${
+                              taskCompletionRate === 100
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                                : taskCompletionRate >= 50
+                                ? 'bg-gradient-to-r from-indigo-500 via-sky-500 to-cyan-400'
+                                : taskCompletionRate > 0
+                                ? 'bg-gradient-to-r from-amber-500 to-indigo-500'
+                                : 'bg-slate-700 w-1'
+                            }`}
+                            style={{
+                              width: `${Math.max(taskCompletionRate, taskCompletionRate > 0 ? 6 : 0)}%`,
+                            }}
                           ></div>
                         </div>
-                        <div className="flex items-center justify-between text-[11px] text-slate-400">
-                          <span>Tasks: {project.tasks.length}</span>
-                          <span>Next: {project.nextActions[0]?.slice(0, 18)}...</span>
+
+                        {/* Mini Task Status Segmented Dots */}
+                        {totalTasks > 0 && (
+                          <div className="flex items-center gap-1 pt-0.5">
+                            {project.tasks.map((t, idx) => (
+                              <div
+                                key={idx}
+                                title={`${t.objective} (${t.currentState})`}
+                                className={`h-1.5 flex-1 rounded-full transition ${
+                                  t.currentState === 'completed'
+                                    ? 'bg-emerald-400'
+                                    : t.currentState === 'awaiting_approval'
+                                    ? 'bg-amber-400'
+                                    : t.currentState === 'in_progress'
+                                    ? 'bg-indigo-400'
+                                    : t.currentState === 'blocked'
+                                    ? 'bg-red-500'
+                                    : 'bg-slate-700'
+                                }`}
+                              ></div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+                          <span className="truncate max-w-[140px]">
+                            {completedTasks} completed • {totalTasks - completedTasks} remaining
+                          </span>
+                          <span className="truncate max-w-[120px] text-indigo-300 font-medium">
+                            {project.nextActions[0]?.slice(0, 16)}...
+                          </span>
                         </div>
                       </div>
                     </div>

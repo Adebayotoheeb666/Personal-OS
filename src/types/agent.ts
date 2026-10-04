@@ -25,6 +25,25 @@ export type SpecialistAgentType =
   | 'documentation'
   | 'review';
 
+export type AgentEmotion =
+  | 'neutral'
+  | 'curious'
+  | 'focused'
+  | 'triumphant'
+  | 'alert'
+  | 'empathetic';
+
+export interface EmotionDetails {
+  emotion: AgentEmotion;
+  label: string;
+  sentiment: 'positive' | 'neutral' | 'negative' | 'analytical';
+  description: string;
+  glowColor: string;
+  primaryColor: string;
+  facialVisor: 'calm' | 'inquisitive' | 'tensor' | 'radiant' | 'warning' | 'tender';
+  pulseSpeed: number; // in seconds
+}
+
 export interface SpecialistAgent {
   id: SpecialistAgentType;
   name: string;

@@ -31,6 +31,7 @@ import {
   memoryCacheService,
   CacheMetrics,
 } from '../services/memoryCacheService';
+import { voiceAgent } from '../services/voiceAgentService';
 
 /**
  * Mock Database Service Layer within AgentContext
@@ -478,6 +479,7 @@ How should we direct execution today? Try asking *"Continue the sales agent"* or
 
     setMessages((prev) => [...prev, userMsg]);
     setIsThinking(true);
+    voiceAgent.analyzeSentimentAndSetEmotion(text, 'user');
 
     // Check if message is a project continuity trigger
     const lower = text.toLowerCase();
@@ -630,6 +632,7 @@ ${targetProject.tasks
   // Research -> Think -> Act Autonomous Loop Runner
   const runAutonomousLoop = async (taskDescription: string, projectId?: string) => {
     setIsThinking(true);
+    voiceAgent.setEmotion('focused', `Autonomous loop started: "${taskDescription.slice(0, 40)}..."`);
     const targetProj = projectId
       ? worldModel.projects.find((p) => p.id === projectId)
       : activeProject || worldModel.projects[0];
@@ -692,6 +695,7 @@ ${targetProject.tasks
 
     setMessages((prev) => [...prev, completionMsg]);
     setIsThinking(false);
+    voiceAgent.setEmotion('triumphant', `Autonomous loop completed for ${targetProj?.name || 'ecosystem'}. 100% verification.`);
   };
 
   // Project Task Engine
