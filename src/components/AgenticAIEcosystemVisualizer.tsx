@@ -70,7 +70,7 @@ export const AgenticAIEcosystemVisualizer: React.FC<VisualizerProps> = ({ onNavi
       <div className="relative z-10 flex-shrink-0 text-center mb-1">
         <div className="inline-flex items-center space-x-2 px-3 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/40 text-cyan-300 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest shadow-[0_0_12px_rgba(6,182,212,0.3)]">
           <Sparkles className="w-3 h-3 text-cyan-400 animate-pulse" />
-          <span>ABIMBOLA &bull; AGENTIC AI ECOSYSTEM</span>
+          <span>MAX &bull; AGENTIC AI ECOSYSTEM</span>
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
           <span>LEVEL 5 AUTONOMY</span>
         </div>
@@ -217,7 +217,7 @@ export const AgenticAIEcosystemVisualizer: React.FC<VisualizerProps> = ({ onNavi
 
               <div className="mt-1">
                 <span className="text-[10px] sm:text-xs font-black tracking-widest text-white uppercase drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">
-                  {voiceState.isListening ? 'LISTENING NOW' : voiceState.isSpeaking ? 'ABIMBOLA SPEAKING' : 'ABIMBOLA CORE'}
+                  {voiceState.isListening ? 'LISTENING NOW' : voiceState.isSpeaking ? 'MAX SPEAKING' : 'MAX CORE'}
                 </span>
                 <p className="text-[9px] sm:text-[10px] text-cyan-300 font-semibold tracking-wide">
                   {voiceState.isListening ? 'Speak instructions to Max...' : 'Tap to Speak to Max'}
