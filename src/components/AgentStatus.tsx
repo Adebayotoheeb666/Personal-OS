@@ -12,7 +12,7 @@ import {
 import { useAgent } from '../context/AgentContext';
 import { voiceAgent, VoiceState } from '../services/voiceAgentService';
 
-export type AbimbolaOperationState = 'Analyzing' | 'Processing' | 'Synthesizing' | 'Idle';
+export type MaxOperationState = 'Analyzing' | 'Processing' | 'Synthesizing' | 'Idle';
 
 export const AgentStatus: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
   const { isThinking, activeLoopTrace } = useAgent();
@@ -34,8 +34,8 @@ export const AgentStatus: React.FC<{ compact?: boolean }> = ({ compact = false }
     return () => clearInterval(timer);
   }, []);
 
-  // Determine current context of Abimbola's internal operations
-  let status: AbimbolaOperationState = 'Idle';
+  // Determine current context of Max's internal operations
+  let status: MaxOperationState = 'Idle';
   let contextDetails = 'Level 5 Gated Autonomy &bull; Continuous Context Ready';
   let icon = <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />;
   let colorClasses = {
@@ -90,7 +90,7 @@ export const AgentStatus: React.FC<{ compact?: boolean }> = ({ compact = false }
       <div className="flex items-center space-x-1.5 text-[10px]">
         <span className={`w-2 h-2 rounded-full ${colorClasses.dot} ${colorClasses.pulse} animate-pulse`} />
         <span className="font-mono font-bold uppercase tracking-wider text-slate-300">
-          Abimbola:
+          Max:
         </span>
         <span
           className={`px-1.5 py-0.2 rounded-full font-bold uppercase font-mono border text-[9px] ${colorClasses.badge}`}
@@ -105,7 +105,7 @@ export const AgentStatus: React.FC<{ compact?: boolean }> = ({ compact = false }
     <div className="flex items-center space-x-2 text-[10px] sm:text-[11px] select-none">
       <div className="flex items-center space-x-1.5">
         <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-          <span>Abimbola Internal Ops:</span>
+          <span>Max Internal Ops:</span>
         </span>
 
         {/* Real-time Operation Badge */}
@@ -124,7 +124,7 @@ export const AgentStatus: React.FC<{ compact?: boolean }> = ({ compact = false }
             borderColor: `${voiceState.emotionDetails.primaryColor}55`,
             backgroundColor: `${voiceState.emotionDetails.primaryColor}15`,
           }}
-          title={`Abimbola Emotion: ${voiceState.emotionDetails.label} - ${voiceState.lastEmotionReason}`}
+          title={`Max Emotion: ${voiceState.emotionDetails.label} - ${voiceState.lastEmotionReason}`}
         >
           <span
             className="w-1.5 h-1.5 rounded-full animate-pulse"

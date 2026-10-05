@@ -21,14 +21,57 @@ import { AgentVoiceHub } from './components/AgentVoiceHub';
 import { AgentStatus } from './components/AgentStatus';
 import { QuickTaskModal } from './components/QuickTaskModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
-import { ArrowLeft, Mic, Sparkles, X, Plus, Search, Command } from 'lucide-react';
+import { VoiceTranscriptSidebar } from './components/VoiceTranscriptSidebar';
+import { ArrowLeft, Mic, Sparkles, X, Plus, Search, Command, History } from 'lucide-react';
+import { voiceAgent } from './services/voiceAgentService';
+import { AgentEmotion } from './types/agent';
+
+const EMOTION_BG_MAP: Record<AgentEmotion, { bg: string; radial: string }> = {
+  neutral: {
+    bg: 'radial-gradient(ellipse at 50% -10%, rgba(6, 182, 212, 0.08) 0%, rgba(7, 11, 20, 1) 75%)',
+    radial: 'radial-gradient(circle at 50% 30%, rgba(6, 182, 212, 0.12), transparent 70%)',
+  },
+  curious: {
+    bg: 'radial-gradient(ellipse at 50% -10%, rgba(14, 165, 233, 0.10) 0%, rgba(7, 11, 20, 1) 75%)',
+    radial: 'radial-gradient(circle at 50% 30%, rgba(14, 165, 233, 0.15), transparent 70%)',
+  },
+  focused: {
+    bg: 'radial-gradient(ellipse at 50% -10%, rgba(168, 85, 247, 0.11) 0%, rgba(7, 11, 20, 1) 75%)',
+    radial: 'radial-gradient(circle at 50% 30%, rgba(168, 85, 247, 0.16), transparent 70%)',
+  },
+  triumphant: {
+    bg: 'radial-gradient(ellipse at 50% -10%, rgba(16, 185, 129, 0.11) 0%, rgba(7, 11, 20, 1) 75%)',
+    radial: 'radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.18), transparent 70%)',
+  },
+  alert: {
+    bg: 'radial-gradient(ellipse at 50% -10%, rgba(239, 68, 68, 0.12) 0%, rgba(7, 11, 20, 1) 75%)',
+    radial: 'radial-gradient(circle at 50% 30%, rgba(239, 68, 68, 0.20), transparent 70%)',
+  },
+  empathetic: {
+    bg: 'radial-gradient(ellipse at 50% -10%, rgba(244, 114, 182, 0.09) 0%, rgba(7, 11, 20, 1) 75%)',
+    radial: 'radial-gradient(circle at 50% 30%, rgba(244, 114, 182, 0.15), transparent 70%)',
+  },
+};
 
 function AppContent() {
   // Default to Holographic Visualizer as requested
   const [currentTab, setCurrentTab] = useState<ActiveTab>('visualizer');
   const [showVoiceDrawer, setShowVoiceDrawer] = useState(false);
+  const [showTranscriptSidebar, setShowTranscriptSidebar] = useState(false);
   const [isQuickTaskOpen, setIsQuickTaskOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Track Max's current AgentEmotion state for subtle dashboard background pulsating shift
+  const [currentEmotion, setCurrentEmotion] = useState<AgentEmotion>(voiceAgent.state.emotion);
+  const [pulseSpeed, setPulseSpeed] = useState<number>(voiceAgent.state.emotionDetails.pulseSpeed || 3.5);
+
+  useEffect(() => {
+    const unsub = voiceAgent.subscribe((state) => {
+      setCurrentEmotion(state.emotion);
+      setPulseSpeed(state.emotionDetails.pulseSpeed || 3.5);
+    });
+    return unsub;
+  }, []);
 
   // Global Control+K / Meta+K Keyboard Listener for Command Palette
   useEffect(() => {
@@ -43,6 +86,8 @@ function AppContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const emotionBg = EMOTION_BG_MAP[currentEmotion] || EMOTION_BG_MAP.neutral;
+
   return (
     <div className="h-screen h-[100dvh] w-screen overflow-hidden bg-[#070b14] text-slate-100 flex font-sans selection:bg-cyan-500 selection:text-white">
       {/* Tactile Sidebar Rail (Inspired by Image 2 with Cyber Aesthetic) */}
@@ -51,6 +96,7 @@ function AppContent() {
         onSelectTab={setCurrentTab}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenQuickTask={() => setIsQuickTaskOpen(true)}
+        onOpenTranscriptSidebar={() => setShowTranscriptSidebar(true)}
       />
 
       {/* Main Viewport Shell */}
@@ -61,10 +107,27 @@ function AppContent() {
           onSelectTab={setCurrentTab}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenQuickTask={() => setIsQuickTaskOpen(true)}
+          onOpenTranscriptSidebar={() => setShowTranscriptSidebar(true)}
         />
 
-        {/* Dashboard Content Container: No page scrollbar on all devices */}
-        <div className="flex-1 min-h-0 w-full overflow-hidden relative flex flex-col">
+        {/* Dashboard Content Container: Subtle background shift + slow pulsation based on Max's AgentEmotion */}
+        <div
+          className="flex-1 min-h-0 w-full overflow-hidden relative flex flex-col transition-all duration-1000"
+          style={{
+            background: emotionBg.bg,
+          }}
+        >
+          {/* Subtle Ambient Pulsating Aura based on current AgentEmotion */}
+          <div
+            className="pointer-events-none absolute inset-0 z-0 animate-emotion-pulse"
+            style={{
+              '--emotion-pulse-speed': `${pulseSpeed}s`,
+              background: emotionBg.radial,
+              filter: 'blur(50px)',
+            } as React.CSSProperties}
+          />
+
+          <div className="relative z-10 flex-1 min-h-0 w-full overflow-hidden flex flex-col">
           {currentTab === 'visualizer' ? (
             /* Primary Mode: Holographic Agentic AI Ecosystem Visualizer (Full viewport fit, zero scrollbars) */
             <main className="flex-1 w-full h-full p-1.5 sm:p-3 overflow-hidden">
@@ -120,6 +183,20 @@ function AppContent() {
               <span className="text-[9px] font-mono px-1 rounded bg-black/30 text-emerald-200">NL Pipe</span>
             </button>
 
+            {/* Live Voice Transcripts Sidebar Trigger Button */}
+            <button
+              type="button"
+              onClick={() => setShowTranscriptSidebar((prev) => !prev)}
+              className="flex items-center space-x-1.5 px-3 sm:px-3.5 py-2 rounded-2xl bg-slate-900/90 hover:bg-slate-850 border border-slate-700/80 text-cyan-300 font-bold text-xs shadow-lg cursor-pointer transition transform hover:scale-105"
+              title="Open Live Voice Transcripts History Sidebar"
+            >
+              <History className="w-4 h-4 text-cyan-400" />
+              <span className="hidden sm:inline">Transcripts</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                {voiceAgent.state.commandHistory.length}
+              </span>
+            </button>
+
             {/* Voice Commander Trigger & Drawer */}
             {showVoiceDrawer ? (
               <div className="w-[320px] sm:w-[420px] max-w-[calc(100vw-24px)] animate-in slide-in-from-bottom-4 duration-200">
@@ -144,13 +221,14 @@ function AppContent() {
                 type="button"
                 onClick={() => setShowVoiceDrawer(true)}
                 className="flex items-center space-x-2 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white font-bold text-xs shadow-[0_0_25px_rgba(6,182,212,0.5)] cursor-pointer transition transform hover:scale-105"
-                title="Open Abimbola Voice Commander"
+                title="Open Max Voice Commander"
               >
                 <Mic className="w-4 h-4 text-cyan-200 animate-pulse" />
-                <span className="hidden sm:inline">Abimbola Voice</span>
+                <span className="hidden sm:inline">Max Voice</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
               </button>
             )}
+          </div>
           </div>
         </div>
 
@@ -169,6 +247,13 @@ function AppContent() {
           </div>
         </footer>
       </div>
+
+      {/* Voice Transcript History Sidebar */}
+      <VoiceTranscriptSidebar
+        isOpen={showTranscriptSidebar}
+        onClose={() => setShowTranscriptSidebar(false)}
+        onNavigateToTab={setCurrentTab}
+      />
 
       {/* Quick Task Modal (Natural Language Scheduler) */}
       <QuickTaskModal

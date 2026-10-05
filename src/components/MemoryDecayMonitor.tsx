@@ -180,7 +180,7 @@ export const MemoryDecayMonitor: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Calculate Abimbola Focus Index
+  // Calculate Max Focus Index
   const focusIndex = useMemo(() => {
     if (memories.length === 0) return 100;
     const totalRetention = memories.reduce((acc, item) => {
@@ -220,7 +220,7 @@ export const MemoryDecayMonitor: React.FC = () => {
           : m
       )
     );
-    notify(`Refreshed context for "${title}". Abimbola re-anchored working memory at 100% fidelity.`);
+    notify(`Refreshed context for "${title}". Max re-anchored working memory at 100% fidelity.`);
     voiceAgent.setEmotion('triumphant', `Refreshed working memory for "${title}". Retention restored.`);
     voiceAgent.speak(`Context refreshed: ${title}. Retention restored.`);
   };
@@ -250,7 +250,7 @@ export const MemoryDecayMonitor: React.FC = () => {
     }
     notify(
       willBePinned
-        ? `Pinned "${title}" to Abimbola's critical attention window. Memory decay frozen.`
+        ? `Pinned "${title}" to Max's critical attention window. Memory decay frozen.`
         : `Unpinned "${title}". Normal natural context decay resumed.`
     );
   };
@@ -264,9 +264,9 @@ export const MemoryDecayMonitor: React.FC = () => {
         lastAccessedMs: Date.now(),
       }))
     );
-    notify('Refreshed all stale memory contexts. Abimbola focus index restored to peak.');
+    notify('Refreshed all stale memory contexts. Max focus index restored to peak.');
     voiceAgent.setEmotion('triumphant', 'All stale contexts refreshed. Working memory at 100% fidelity.');
-    voiceAgent.speak("All active context items refreshed. Abimbola's working memory is re-synchronized.");
+    voiceAgent.speak("All active context items refreshed. Max's working memory is re-synchronized.");
   };
 
   // Actions: Add new memory
@@ -292,7 +292,7 @@ export const MemoryDecayMonitor: React.FC = () => {
     setShowAddModal(false);
     setNewTitle('');
     setNewSummary('');
-    notify(`Injected "${newItem.title}" directly into Abimbola's active context.`);
+    notify(`Injected "${newItem.title}" directly into Max's active context.`);
     voiceAgent.speak(`Memory context added: ${newItem.title}`);
   };
 
@@ -361,12 +361,12 @@ export const MemoryDecayMonitor: React.FC = () => {
               <h2 className="text-sm sm:text-base font-bold text-white tracking-wide flex items-center gap-1.5">
                 <span>Working Context Memory Decay Monitor</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono border border-indigo-500/30 font-semibold">
-                  Abimbola Retention HUD
+                  Max Retention HUD
                 </span>
               </h2>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Visualizes decay for stale context items. Manually <span className="text-cyan-300 font-semibold">refresh</span> or <span className="text-amber-300 font-semibold">pin</span> critical memories to keep Abimbola focused.
+              Visualizes decay for stale context items. Manually <span className="text-cyan-300 font-semibold">refresh</span> or <span className="text-amber-300 font-semibold">pin</span> critical memories to keep Max focused.
             </p>
           </div>
         </div>
@@ -649,7 +649,7 @@ export const MemoryDecayMonitor: React.FC = () => {
                             ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 border border-rose-500/40 animate-pulse'
                             : 'bg-slate-900 text-cyan-300 hover:bg-cyan-500/20 hover:text-cyan-200 border border-slate-800'
                         }`}
-                        title="Manually re-anchor this memory into Abimbola's immediate active context"
+                        title="Manually re-anchor this memory into Max's immediate active context"
                       >
                         <RotateCcw className="w-2.5 h-2.5" />
                         <span>Refresh Context</span>
@@ -687,7 +687,7 @@ export const MemoryDecayMonitor: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
                 <Brain className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white">Anchor Critical Memory into Abimbola</h3>
+                <h3 className="text-sm font-bold text-white">Anchor Critical Memory into Max</h3>
               </div>
               <button
                 type="button"
@@ -751,7 +751,7 @@ export const MemoryDecayMonitor: React.FC = () => {
                   rows={3}
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
-                  placeholder="Provide precise architectural constraints or user preferences Abimbola should prioritize..."
+                  placeholder="Provide precise architectural constraints or user preferences Max should prioritize..."
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>

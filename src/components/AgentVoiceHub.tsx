@@ -29,11 +29,15 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
+  Download,
+  Trash2,
+  Filter,
 } from 'lucide-react';
 import {
   voiceAgent,
   VoiceState,
   VoiceCommandHistoryItem,
+  EmotionShiftItem,
   AI_VOICE_PROFILES,
   VoiceProfile,
   EMOTION_CONFIGS,
@@ -58,9 +62,38 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
   const { runAutonomousLoop, setActiveMode } = useAgent();
   const [voiceState, setVoiceState] = useState<VoiceState>(voiceAgent.state);
   const [typedCommand, setTypedCommand] = useState('');
-  const [activeSubTab, setActiveSubTab] = useState<'commander' | 'tts-profiles' | 'emotions'>('commander');
-  const [customTtsText, setCustomTtsText] = useState('Abimbola neural voice engine active. Synthesizing responses with adaptive prosody and real-time sentiment awareness.');
+  const [activeSubTab, setActiveSubTab] = useState<'commander' | 'preferences' | 'emotions'>('commander');
+  const [customTtsText, setCustomTtsText] = useState('Max neural voice engine calibrated. Ready to execute autonomous operations with Level 5 safeguards.');
   const [isTestingSpeech, setIsTestingSpeech] = useState(false);
+  const [emotionFilter, setEmotionFilter] = useState<string>('all');
+  const [emotionSearchQuery, setEmotionSearchQuery] = useState<string>('');
+
+  const filteredEmotionHistory = (voiceState.emotionHistory || []).filter((item) => {
+    if (emotionFilter !== 'all' && item.toEmotion !== emotionFilter && item.fromEmotion !== emotionFilter) {
+      return false;
+    }
+    if (emotionSearchQuery.trim()) {
+      const q = emotionSearchQuery.toLowerCase();
+      return (
+        item.reason.toLowerCase().includes(q) ||
+        item.toEmotion.toLowerCase().includes(q) ||
+        item.fromEmotion.toLowerCase().includes(q) ||
+        item.sentiment.toLowerCase().includes(q) ||
+        (item.triggerSource && item.triggerSource.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  });
+
+  const handleExportEmotionHistory = () => {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(voiceState.emotionHistory || [], null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `max-agent-emotion-history-${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
 
   useEffect(() => {
     const unsubState = voiceAgent.subscribe((state) => {
@@ -81,7 +114,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
       }
 
       if (intent === 'ACTION_RUN_LOOP') {
-        runAutonomousLoop('Abimbola voice-triggered autonomous ecosystem verification & project memory sync');
+        runAutonomousLoop('Max voice-triggered autonomous ecosystem verification & project memory sync');
       } else if (intent === 'ACTION_URGENT_TASKS' && onNavigateToTab) {
         onNavigateToTab('task-engine');
       } else if (intent === 'ACTION_QUICK_TASK') {
@@ -156,7 +189,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
                 ? 'bg-cyan-600 text-white shadow-cyan-500/50'
                 : 'bg-gradient-to-r from-cyan-600/30 to-indigo-600/30 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-600/40'
             }`}
-            title={voiceState.isListening ? 'Listening (Click to stop)' : 'Talk to Abimbola'}
+            title={voiceState.isListening ? 'Listening (Click to stop)' : 'Talk to Max'}
           >
             {voiceState.isListening ? (
               <>
@@ -166,12 +199,12 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
             ) : voiceState.isSpeaking ? (
               <>
                 <Volume2 className="w-3.5 h-3.5 text-white animate-bounce" />
-                <span>Abimbola Speaking</span>
+                <span>Max Speaking</span>
               </>
             ) : (
               <>
                 <Mic className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Abimbola Voice</span>
+                <span>Max Voice</span>
               </>
             )}
 
@@ -194,7 +227,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
           type="button"
           onClick={() => voiceAgent.toggleMute()}
           className="p-1 rounded-full bg-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer"
-          title={voiceState.isMuted ? 'Unmute Abimbola Voice' : 'Mute Abimbola Voice'}
+          title={voiceState.isMuted ? 'Unmute Max Voice' : 'Mute Max Voice'}
         >
           {voiceState.isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
@@ -223,7 +256,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
           <div>
             <div className="flex items-center space-x-1.5 flex-wrap">
               <span className="text-xs font-black uppercase tracking-wider text-white">
-                Abimbola &bull; Voice &amp; TTS Hub
+                Max &bull; Voice &amp; TTS Hub
               </span>
               {/* Emotion Indicator Badge */}
               <span
@@ -265,15 +298,15 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setActiveSubTab('tts-profiles')}
+              onClick={() => setActiveSubTab('preferences')}
               className={`px-2 py-1 rounded-lg transition cursor-pointer flex items-center space-x-1 ${
-                activeSubTab === 'tts-profiles'
+                activeSubTab === 'preferences'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Volume2 className="w-3 h-3 text-purple-300" />
-              <span>TTS Profiles ({AI_VOICE_PROFILES.length})</span>
+              <Sliders className="w-3 h-3 text-purple-300" />
+              <span>Voice Preferences</span>
             </button>
             <button
               type="button"
@@ -293,7 +326,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
             type="button"
             onClick={() => voiceAgent.toggleMute()}
             className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
-            title={voiceState.isMuted ? 'Unmute Abimbola' : 'Mute Abimbola'}
+            title={voiceState.isMuted ? 'Unmute Max' : 'Mute Max'}
           >
             {voiceState.isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-cyan-300" />}
           </button>
@@ -359,7 +392,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
                 ) : voiceState.isSpeaking ? (
                   <>
                     <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-200 animate-pulse" />
-                    <span className="text-[9px] font-black uppercase text-cyan-100 mt-0.5 tracking-wider">Abimbola</span>
+                    <span className="text-[9px] font-black uppercase text-cyan-100 mt-0.5 tracking-wider">Max</span>
                   </>
                 ) : (
                   <>
@@ -376,7 +409,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
                 <div className="space-y-1">
                   <span className="text-[10px] font-mono uppercase text-rose-400 font-bold flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                    <span>Live Audio Stream &bull; Speak instructions to Abimbola</span>
+                    <span>Live Audio Stream &bull; Speak instructions to Max</span>
                   </span>
                   <p className="text-xs text-white font-medium italic">
                     {voiceState.interimTranscript ? `"${voiceState.interimTranscript}"` : 'Listening for your voice command...'}
@@ -387,7 +420,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono uppercase text-cyan-400 font-bold flex items-center gap-1">
                       <Sparkles className="w-3 h-3 text-cyan-300" />
-                      <span>Abimbola Spoken Response ({voiceState.selectedProfile.name})</span>
+                      <span>Max Spoken Response ({voiceState.selectedProfile.name})</span>
                     </span>
                     {/* Speak again button */}
                     <button
@@ -468,7 +501,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
                 ))
               ) : (
                 <div className="p-2 text-center text-xs text-slate-500">
-                  No voice commands transcribed yet. Speak to Abimbola!
+                  No voice commands transcribed yet. Speak to Max!
                 </div>
               )}
             </div>
@@ -529,7 +562,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
                 type="text"
                 value={typedCommand}
                 onChange={(e) => setTypedCommand(e.target.value)}
-                placeholder="Type command to Abimbola (e.g. 'Show tasks', 'Run loop')..."
+                placeholder="Type command to Max (e.g. 'Show tasks', 'Run loop')..."
                 className="w-full bg-slate-950/90 border border-slate-800 focus:border-cyan-400 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition font-sans"
               />
             </div>
@@ -545,17 +578,17 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
         </div>
       )}
 
-      {/* SUB-VIEW 2: Selectable AI-Generated Voice Profiles & Speech Synthesis Studio */}
-      {activeSubTab === 'tts-profiles' && (
-        <div className="space-y-3">
+      {/* SUB-VIEW 2: Voice Preferences Panel (Pitch, Rate, Volume & Profile Selector) */}
+      {activeSubTab === 'preferences' && (
+        <div className="space-y-3.5">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold text-white flex items-center space-x-1.5">
-                <Volume2 className="w-3.5 h-3.5 text-purple-400" />
-                <span>Selectable AI-Generated Voice Profiles</span>
+                <Sliders className="w-3.5 h-3.5 text-purple-400" />
+                <span>Voice Preferences &amp; Acoustic Calibration</span>
               </h3>
               <p className="text-[10px] text-slate-400">
-                Choose the neural voice profile Abimbola utilizes to speak responses back to you.
+                Adjust Max's speaking rate, pitch modulation, volume, and select from AI-generated neural profiles.
               </p>
             </div>
             {/* Auto-speak toggle */}
@@ -573,109 +606,221 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
             </div>
           </div>
 
-          {/* Voice Profile Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {AI_VOICE_PROFILES.map((profile) => {
-              const isSelected = voiceState.selectedProfileId === profile.id;
-              return (
-                <div
-                  key={profile.id}
-                  onClick={() => handleSelectProfile(profile.id)}
-                  className={`p-2.5 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
-                    isSelected
-                      ? 'bg-purple-950/40 border-purple-500/80 shadow-md shadow-purple-500/20 ring-1 ring-purple-500/50'
-                      : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-1">
-                      <div className="flex items-center space-x-2">
+          {/* Sliders Control Deck: Pitch, Speaking Rate, Volume */}
+          <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+              <span className="text-[10px] uppercase font-bold text-slate-300 flex items-center gap-1.5">
+                <Sliders className="w-3 h-3 text-cyan-400" />
+                <span>Prosody &amp; Frequency Controls</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  voiceAgent.setSpeechSettings({
+                    pitchMultiplier: 1.0,
+                    rateMultiplier: 1.0,
+                    volume: 1.0,
+                  });
+                  voiceAgent.speak('Voice parameters reset to baseline default.', { profileId: voiceState.selectedProfileId });
+                }}
+                className="text-[10px] text-cyan-400 hover:text-cyan-300 font-mono flex items-center space-x-1 transition cursor-pointer"
+                title="Reset sliders to default 1.0x"
+              >
+                <RotateCcw className="w-2.5 h-2.5" />
+                <span>Reset Defaults</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Speaking Rate Slider */}
+              <div className="space-y-1 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-300 font-medium">Speaking Rate:</span>
+                  <span className="font-mono text-cyan-300 font-bold">{voiceState.rateMultiplier.toFixed(2)}x</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.05"
+                  value={voiceState.rateMultiplier}
+                  onChange={(e) => voiceAgent.setSpeechSettings({ rateMultiplier: Number(e.target.value) })}
+                  className="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                />
+                <div className="flex justify-between text-[8px] font-mono text-slate-500 pt-0.5">
+                  <span>0.5x Slow</span>
+                  <span>1.0x Normal</span>
+                  <span>2.0x Rapid</span>
+                </div>
+              </div>
+
+              {/* Pitch Adjustment Slider */}
+              <div className="space-y-1 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-300 font-medium">Vocal Pitch:</span>
+                  <span className="font-mono text-purple-300 font-bold">{voiceState.pitchMultiplier.toFixed(2)}x</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="1.8"
+                  step="0.05"
+                  value={voiceState.pitchMultiplier}
+                  onChange={(e) => voiceAgent.setSpeechSettings({ pitchMultiplier: Number(e.target.value) })}
+                  className="w-full accent-purple-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                />
+                <div className="flex justify-between text-[8px] font-mono text-slate-500 pt-0.5">
+                  <span>0.5x Deep Bass</span>
+                  <span>1.0x Natural</span>
+                  <span>1.8x Treble</span>
+                </div>
+              </div>
+
+              {/* Volume Gain Slider */}
+              <div className="space-y-1 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-300 font-medium">Volume Gain:</span>
+                  <span className="font-mono text-emerald-300 font-bold">{Math.round((voiceState.volume || 1.0) * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1.0"
+                  step="0.05"
+                  value={voiceState.volume ?? 1.0}
+                  onChange={(e) => voiceAgent.setSpeechSettings({ volume: Number(e.target.value) })}
+                  className="w-full accent-emerald-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                />
+                <div className="flex justify-between text-[8px] font-mono text-slate-500 pt-0.5">
+                  <span>10% Low</span>
+                  <span>50%</span>
+                  <span>100% Full</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Voice Profile Selection Cards Grid */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1.5">
+                <Bot className="w-3 h-3 text-purple-400" />
+                <span>Select AI-Generated Voice Profile ({AI_VOICE_PROFILES.length})</span>
+              </span>
+              <span className="text-[9px] text-slate-500 font-mono">Click card to activate</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {AI_VOICE_PROFILES.map((profile) => {
+                const isSelected = voiceState.selectedProfileId === profile.id;
+                return (
+                  <div
+                    key={profile.id}
+                    onClick={() => handleSelectProfile(profile.id)}
+                    className={`p-2.5 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-purple-950/40 border-purple-500/80 shadow-md shadow-purple-500/20 ring-1 ring-purple-500/50'
+                        : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: profile.soundColor }}
+                          />
+                          <h4 className="font-bold text-xs text-white leading-tight">{profile.name}</h4>
+                        </div>
                         <span
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: profile.soundColor }}
-                        />
-                        <h4 className="font-bold text-xs text-white leading-tight">{profile.name}</h4>
+                          className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded uppercase"
+                          style={{
+                            color: profile.soundColor,
+                            backgroundColor: `${profile.soundColor}20`,
+                            border: `1px solid ${profile.soundColor}40`,
+                          }}
+                        >
+                          {profile.avatarBadge}
+                        </span>
                       </div>
-                      <span
-                        className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded uppercase"
-                        style={{
-                          color: profile.soundColor,
-                          backgroundColor: `${profile.soundColor}20`,
-                          border: `1px solid ${profile.soundColor}40`,
-                        }}
-                      >
-                        {profile.avatarBadge}
-                      </span>
+
+                      <p className="text-[10px] text-purple-300 font-semibold mt-1">{profile.tone}</p>
+                      <p className="text-[10px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                        {profile.description}
+                      </p>
                     </div>
 
-                    <p className="text-[10px] text-purple-300 font-semibold mt-1">{profile.tone}</p>
-                    <p className="text-[10px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                      {profile.description}
-                    </p>
+                    <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                      <span className="text-slate-500 font-mono">
+                        Base: {profile.basePitch}x pitch &bull; {profile.baseRate}x rate
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          voiceAgent.speak(
+                            `This is ${profile.name}. Neural vocal synthesis calibrated and ready.`,
+                            { profileId: profile.id }
+                          );
+                        }}
+                        className="px-2 py-0.5 rounded-md bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 font-bold transition flex items-center space-x-1 cursor-pointer"
+                      >
+                        <Play className="w-2.5 h-2.5" />
+                        <span>Sample</span>
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
-                    <span className="text-slate-500 font-mono">
-                      Pitch: {profile.basePitch}x &bull; Rate: {profile.baseRate}x
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        voiceAgent.speak(
-                          `This is ${profile.name}. Neural vocal synthesis calibrated and ready.`,
-                          { profileId: profile.id }
-                        );
-                      }}
-                      className="px-2 py-0.5 rounded-md bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 font-bold transition flex items-center space-x-1"
-                    >
-                      <Play className="w-2.5 h-2.5" />
-                      <span>Sample</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           {/* Interactive Speech Synthesis Studio Box */}
           <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-cyan-400" />
-              <span>Interactive Speech Synthesis Sandbox</span>
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-cyan-400" />
+                <span>Test Spoken Response with Calibrated Voice</span>
+              </span>
+              <div className="flex items-center space-x-1">
+                {(['Telemetry check', 'Task scheduled', 'Level 5 active'] as const).map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => {
+                      if (chip === 'Telemetry check') setCustomTtsText('Max telemetry optimal. All systems functioning with Level 5 safeguards.');
+                      if (chip === 'Task scheduled') setCustomTtsText('Task scheduled with high priority under EduCore Platform.');
+                      if (chip === 'Level 5 active') setCustomTtsText('Level 5 Gated Autonomy active. All operations require cryptographic human approval.');
+                    }}
+                    className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <textarea
               rows={2}
               value={customTtsText}
               onChange={(e) => setCustomTtsText(e.target.value)}
-              placeholder="Type any sentence to hear Abimbola vocalize it with the selected profile..."
+              placeholder="Type any sentence to hear Max vocalize it with the selected profile, rate, and pitch..."
               className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
             />
 
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center space-x-2 text-[10px] text-slate-400">
-                <span>Speed Multiplier:</span>
-                <input
-                  type="range"
-                  min="0.8"
-                  max="1.5"
-                  step="0.05"
-                  value={voiceState.rateMultiplier}
-                  onChange={(e) => voiceAgent.setSpeechSettings({ rateMultiplier: Number(e.target.value) })}
-                  className="w-20 accent-cyan-500 cursor-pointer"
-                />
-                <span className="font-mono text-cyan-300">{voiceState.rateMultiplier}x</span>
-              </div>
+              <span className="text-[10px] text-slate-400 font-mono">
+                Effective: {((voiceState.selectedProfile.baseRate || 1.0) * voiceState.rateMultiplier).toFixed(2)}x rate &bull; {((voiceState.selectedProfile.basePitch || 1.0) * voiceState.pitchMultiplier).toFixed(2)}x pitch
+              </span>
 
               <button
                 type="button"
                 onClick={handleTestTts}
                 disabled={isTestingSpeech || !customTtsText.trim()}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center space-x-1"
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center space-x-1.5"
               >
                 <Volume2 className="w-3.5 h-3.5" />
-                <span>Speak with Abimbola</span>
+                <span>Audition Voice</span>
               </button>
             </div>
           </div>
@@ -684,7 +829,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
 
       {/* SUB-VIEW 3: AgentEmotion State & Sentiment Feedback Matrix */}
       {activeSubTab === 'emotions' && (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           <div className="flex items-start justify-between gap-2">
             <div>
               <h3 className="text-xs font-bold text-white flex items-center space-x-1.5">
@@ -692,7 +837,7 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
                 <span>AgentEmotion State &amp; Sentiment Feedback</span>
               </h3>
               <p className="text-[10px] text-slate-400">
-                Abimbola modulates appearance, visor symbology, animations, and speech prosody based on sentiment.
+                Max modulates appearance, visor symbology, animations, and speech prosody based on sentiment.
               </p>
             </div>
 
@@ -738,6 +883,195 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
             </div>
           </div>
 
+          {/* EMOTION SHIFT HISTORY TIMELINE LOG */}
+          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center space-x-2">
+                <History className="w-3.5 h-3.5 text-cyan-400" />
+                <h4 className="text-xs font-bold text-white tracking-wide">
+                  Max Emotion Shift History Timeline
+                </h4>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/60">
+                  {filteredEmotionHistory.length} recorded
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-1.5">
+                <button
+                  type="button"
+                  onClick={handleExportEmotionHistory}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] font-bold transition flex items-center space-x-1 cursor-pointer"
+                  title="Export emotion shifts log to JSON"
+                >
+                  <Download className="w-2.5 h-2.5" />
+                  <span>Export JSON</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => voiceAgent.clearEmotionHistory()}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-red-950 text-slate-400 hover:text-red-300 text-[10px] font-bold transition flex items-center space-x-1 cursor-pointer"
+                  title="Clear history log"
+                >
+                  <Trash2 className="w-2.5 h-2.5" />
+                  <span>Clear</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter toolbar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-900">
+              {/* Search input */}
+              <div className="relative flex-1 min-w-[140px] max-w-xs">
+                <Search className="w-3 h-3 text-slate-500 absolute left-2 top-2" />
+                <input
+                  type="text"
+                  value={emotionSearchQuery}
+                  onChange={(e) => setEmotionSearchQuery(e.target.value)}
+                  placeholder="Search triggers & sentiments..."
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-7 pr-2 py-1 text-[10px] text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              {/* Emotion filter chips */}
+              <div className="flex flex-wrap items-center gap-1">
+                {(['all', 'neutral', 'curious', 'focused', 'triumphant', 'alert', 'empathetic'] as const).map((em) => {
+                  const isSel = emotionFilter === em;
+                  const color = em === 'all' ? '#94a3b8' : EMOTION_CONFIGS[em]?.primaryColor;
+                  return (
+                    <button
+                      key={em}
+                      type="button"
+                      onClick={() => setEmotionFilter(em)}
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase transition cursor-pointer flex items-center space-x-1 ${
+                        isSel
+                          ? 'bg-slate-800 text-white border border-slate-600'
+                          : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
+                    >
+                      {em !== 'all' && (
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                      )}
+                      <span>{em}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Timeline Scroll List */}
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 no-scrollbar pt-1">
+              {filteredEmotionHistory.length === 0 ? (
+                <div className="p-4 rounded-xl bg-slate-900/40 border border-dashed border-slate-800 text-center text-xs text-slate-500 font-mono">
+                  No emotional state shifts match the selected filters.
+                </div>
+              ) : (
+                filteredEmotionHistory.map((item, index) => {
+                  const toConf = EMOTION_CONFIGS[item.toEmotion] || EMOTION_CONFIGS.neutral;
+                  const fromConf = EMOTION_CONFIGS[item.fromEmotion] || EMOTION_CONFIGS.neutral;
+                  const isLatest = index === 0;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`relative pl-5 pb-2.5 transition-all ${
+                        index !== filteredEmotionHistory.length - 1 ? 'border-l border-slate-800/80 ml-2.5' : 'ml-2.5'
+                      }`}
+                    >
+                      {/* Timeline Dot Node */}
+                      <span
+                        className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-slate-950 flex items-center justify-center ${
+                          isLatest ? 'animate-pulse ring-2 ring-cyan-400/50' : ''
+                        }`}
+                        style={{ backgroundColor: toConf.primaryColor }}
+                      />
+
+                      {/* Timeline Card */}
+                      <div className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800/90 hover:border-slate-700 transition space-y-1.5">
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px]">
+                          {/* Shift visual: From -> To */}
+                          <div className="flex items-center space-x-1.5">
+                            <span
+                              className="px-1.5 py-0.5 rounded font-mono font-bold uppercase text-[9px]"
+                              style={{
+                                color: fromConf.primaryColor,
+                                backgroundColor: `${fromConf.primaryColor}15`,
+                                border: `1px solid ${fromConf.primaryColor}40`,
+                              }}
+                            >
+                              {item.fromEmotion}
+                            </span>
+                            <ArrowRight className="w-2.5 h-2.5 text-slate-500" />
+                            <span
+                              className="px-1.5 py-0.5 rounded font-mono font-bold uppercase text-[9px] flex items-center space-x-1"
+                              style={{
+                                color: toConf.primaryColor,
+                                backgroundColor: `${toConf.primaryColor}20`,
+                                border: `1px solid ${toConf.primaryColor}60`,
+                              }}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: toConf.primaryColor }} />
+                              <span>{item.toEmotion}</span>
+                            </span>
+
+                            {isLatest && (
+                              <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/50">
+                                Current
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Time & Duration badge */}
+                          <div className="flex items-center space-x-2 text-[9px] text-slate-400 font-mono">
+                            <span className="flex items-center space-x-1">
+                              <Clock className="w-2.5 h-2.5 text-slate-500" />
+                              <span>{item.timestamp}</span>
+                            </span>
+                            {item.durationSeconds && (
+                              <span className="text-slate-500">
+                                ({item.durationSeconds > 60 ? `${Math.floor(item.durationSeconds / 60)}m ${item.durationSeconds % 60}s` : `${item.durationSeconds}s`})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Trigger Reason */}
+                        <p className="text-[11px] text-slate-300 leading-snug">
+                          {item.reason}
+                        </p>
+
+                        {/* Card Footer: Sentiment, Source & Re-adopt Button */}
+                        <div className="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-slate-800/60 text-[9px]">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono text-slate-400">
+                              Sentiment: <strong className="text-slate-300">{item.sentiment}</strong>
+                            </span>
+                            {item.triggerSource && (
+                              <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-400 uppercase font-mono text-[8px]">
+                                {item.triggerSource.replace('_', ' ')}
+                              </span>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              voiceAgent.setEmotion(item.toEmotion, `Re-adopted from timeline shift event (${item.timestamp})`, 'manual_studio');
+                              voiceAgent.speak(`Max re-adopted emotional state: ${toConf.label}.`);
+                            }}
+                            className="px-2 py-0.5 rounded bg-slate-800 hover:bg-cyan-900/60 text-slate-300 hover:text-cyan-200 border border-slate-700/60 hover:border-cyan-500/50 font-bold transition flex items-center space-x-1 cursor-pointer"
+                          >
+                            <RotateCcw className="w-2.5 h-2.5" />
+                            <span>Re-adopt State</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
           {/* Manual Emotion Modulation Sandbox */}
           <div>
             <span className="text-[10px] font-extrabold uppercase text-slate-400 mb-1.5 block">
@@ -752,8 +1086,8 @@ export const AgentVoiceHub: React.FC<AgentVoiceHubProps> = ({
                     key={em}
                     type="button"
                     onClick={() => {
-                      voiceAgent.setEmotion(em, `User manually selected ${conf.label} state in Emotion Studio.`);
-                      voiceAgent.speak(`Abimbola emotion transitioned to ${conf.label}.`);
+                      voiceAgent.setEmotion(em, `User manually selected ${conf.label} state in Emotion Studio.`, 'manual_studio');
+                      voiceAgent.speak(`Max emotion transitioned to ${conf.label}.`);
                     }}
                     className={`p-2 rounded-xl border text-left transition cursor-pointer flex items-center space-x-2 ${
                       isCurrent

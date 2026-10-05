@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAgent } from '../context/AgentContext';
 import { KnowledgeClusterGraph } from './KnowledgeClusterGraph';
+import { ForceDirectedSVGGraph } from './ForceDirectedSVGGraph';
 
 interface GraphNode {
   id: string;
@@ -194,7 +195,7 @@ export const KnowledgeGraphView: React.FC = () => {
   const { sendMessage } = useAgent();
   const [selectedNode, setSelectedNode] = useState<GraphNode>(GRAPH_NODES[0]);
   const [filterType, setFilterType] = useState<string>('all');
-  const [viewPerspective, setViewPerspective] = useState<'cluster' | 'entities' | 'both'>('cluster');
+  const [viewPerspective, setViewPerspective] = useState<'force-svg' | 'cluster' | 'entities' | 'both'>('force-svg');
 
   const filteredNodes = GRAPH_NODES.filter((n) => {
     if (filterType !== 'all' && n.type !== filterType) return false;
@@ -213,18 +214,31 @@ export const KnowledgeGraphView: React.FC = () => {
         </div>
 
         {/* View Mode Switcher */}
-        <div className="flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+        <div className="flex flex-wrap items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs gap-1">
+          <button
+            type="button"
+            onClick={() => setViewPerspective('force-svg')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
+              viewPerspective === 'force-svg'
+                ? 'bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 text-white shadow-sm shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Network className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Force-Directed SVG (Tasks &bull; Tools &bull; Memory)</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setViewPerspective('cluster')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
               viewPerspective === 'cluster'
-                ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-sm shadow-cyan-500/20'
+                ? 'bg-cyan-700 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Activity className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Knowledge Clusters (Recharts Force Graph)</span>
+            <span>Domain Clusters (Recharts)</span>
           </button>
 
           <button
@@ -232,12 +246,12 @@ export const KnowledgeGraphView: React.FC = () => {
             onClick={() => setViewPerspective('entities')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
               viewPerspective === 'entities'
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                ? 'bg-indigo-700 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <GitBranch className="w-3.5 h-3.5 text-purple-300" />
-            <span>Entity Reuse Map (SVG)</span>
+            <span>Entity Reuse Map</span>
           </button>
 
           <button
@@ -250,12 +264,17 @@ export const KnowledgeGraphView: React.FC = () => {
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Combined View</span>
+            <span>Multi-Graph</span>
           </button>
         </div>
       </div>
 
-      {/* 1. Knowledge Cluster Visualization using Recharts (Requirement 4) */}
+      {/* 1. Interactive Force-Directed SVG Graph (Active Project Tasks, Connected Tools, Memory Clusters) */}
+      {(viewPerspective === 'force-svg' || viewPerspective === 'both') && (
+        <ForceDirectedSVGGraph />
+      )}
+
+      {/* 2. Knowledge Cluster Visualization using Recharts */}
       {(viewPerspective === 'cluster' || viewPerspective === 'both') && (
         <KnowledgeClusterGraph />
       )}

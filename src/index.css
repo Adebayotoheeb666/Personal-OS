@@ -146,3 +146,21 @@ body,
 .soundwave-bar:nth-child(7) { animation-delay: 0.2s; }
 .soundwave-bar:nth-child(8) { animation-delay: 0.45s; }
 
+/* Subtle Background Ambient Aura Pulsator for AgentEmotion */
+@keyframes emotion-ambient-pulse {
+  0%, 100% {
+    opacity: 0.28;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.08);
+  }
+}
+
+.animate-emotion-pulse {
+  animation: emotion-ambient-pulse var(--emotion-pulse-speed, 3.5s) ease-in-out infinite;
+  transition: opacity 1.2s ease, filter 1.2s ease;
+}
+
+

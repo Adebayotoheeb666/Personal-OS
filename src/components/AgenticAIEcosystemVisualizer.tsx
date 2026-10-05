@@ -220,7 +220,7 @@ export const AgenticAIEcosystemVisualizer: React.FC<VisualizerProps> = ({ onNavi
                   {voiceState.isListening ? 'LISTENING NOW' : voiceState.isSpeaking ? 'ABIMBOLA SPEAKING' : 'ABIMBOLA CORE'}
                 </span>
                 <p className="text-[9px] sm:text-[10px] text-cyan-300 font-semibold tracking-wide">
-                  {voiceState.isListening ? 'Speak instructions to Abimbola...' : 'Tap to Speak to Abimbola'}
+                  {voiceState.isListening ? 'Speak instructions to Max...' : 'Tap to Speak to Max'}
                 </p>
               </div>
 
@@ -232,7 +232,7 @@ export const AgenticAIEcosystemVisualizer: React.FC<VisualizerProps> = ({ onNavi
                   backgroundColor: `${voiceState.emotionDetails.primaryColor}20`,
                   border: `1px solid ${voiceState.emotionDetails.primaryColor}55`,
                 }}
-                title={`Abimbola Emotion: ${voiceState.emotionDetails.label} - ${voiceState.lastEmotionReason}`}
+                title={`Max Emotion: ${voiceState.emotionDetails.label} - ${voiceState.lastEmotionReason}`}
               >
                 <span
                   className="w-1.5 h-1.5 rounded-full animate-pulse"

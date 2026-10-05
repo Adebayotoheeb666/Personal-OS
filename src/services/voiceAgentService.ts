@@ -1,5 +1,5 @@
 /**
- * Voice Interaction & Emotion Modulation Service for Abimbola - Autonomous Agentic AI
+ * Voice Interaction & Emotion Modulation Service for Max - Autonomous Agentic AI
  * Provides Web Speech Recognition (STT), AI-Generated Voice Profile Speech Synthesis (TTS),
  * Audio Frequency Waveform Simulation, Voice Command History, Sentiment-Driven AgentEmotion, and Intent Parsing.
  */
@@ -13,6 +13,18 @@ export interface VoiceCommandHistoryItem {
   intent: string;
   response: string;
   emotion?: AgentEmotion;
+}
+
+export interface EmotionShiftItem {
+  id: string;
+  timestamp: string; // Formatted time string
+  rawTimestamp: number;
+  fromEmotion: AgentEmotion;
+  toEmotion: AgentEmotion;
+  reason: string;
+  sentiment: 'positive' | 'neutral' | 'negative' | 'analytical';
+  durationSeconds?: number;
+  triggerSource?: 'voice_command' | 'sentiment_modulation' | 'system_event' | 'manual_studio';
 }
 
 export interface VoiceProfile {
@@ -31,8 +43,8 @@ export interface VoiceProfile {
 
 export const AI_VOICE_PROFILES: VoiceProfile[] = [
   {
-    id: 'abimbola-cyber-core',
-    name: 'Abimbola Cybernetic Core',
+    id: 'max-cyber-core',
+    name: 'Max Cybernetic Core',
     tagline: 'Primary Neural AI Core',
     tone: 'Crisp, Authoritative & Cybernetic',
     description: 'Ultra-clear synthetic prosody with subtle cybernetic cadence, optimized for system telemetry and execution directives.',
@@ -44,8 +56,8 @@ export const AI_VOICE_PROFILES: VoiceProfile[] = [
     preferredVoices: ['Google US English', 'Alex', 'Samantha', 'Natural', 'en-US'],
   },
   {
-    id: 'abimbola-synth-prime',
-    name: 'Abimbola Synthesizer Prime',
+    id: 'max-synth-prime',
+    name: 'Max Synthesizer Prime',
     tagline: 'Warm & Empathetic AI',
     tone: 'Melodic, Reassuring & Warm',
     description: 'Naturalistic vocal cadence with warm harmonic overtones, ideal for collaborative planning and personal coaching.',
@@ -57,8 +69,8 @@ export const AI_VOICE_PROFILES: VoiceProfile[] = [
     preferredVoices: ['Samantha', 'Google UK English Female', 'Victoria', 'en-GB'],
   },
   {
-    id: 'abimbola-quantum-oracle',
-    name: 'Abimbola Quantum Oracle',
+    id: 'max-quantum-oracle',
+    name: 'Max Quantum Oracle',
     tagline: 'Deep Resonant Architecture',
     tone: 'Gravitational, Deep & Deliberate',
     description: 'Low-frequency resonant resonance designed for architectural synthesis, high-stakes security reviews, and strategic world modeling.',
@@ -70,8 +82,8 @@ export const AI_VOICE_PROFILES: VoiceProfile[] = [
     preferredVoices: ['Daniel', 'Google UK English Male', 'Fred', 'en-US'],
   },
   {
-    id: 'abimbola-rapid-velocity',
-    name: 'Abimbola Rapid Velocity',
+    id: 'max-rapid-velocity',
+    name: 'Max Rapid Velocity',
     tagline: 'High-Speed Autonomous Operator',
     tone: 'Accelerated, Focused & Staccato',
     description: 'High-speed audio transmission designed for power users who want rapid-fire briefings and quick milestone recaps.',
@@ -83,8 +95,8 @@ export const AI_VOICE_PROFILES: VoiceProfile[] = [
     preferredVoices: ['Google US English', 'Alex', 'en-US'],
   },
   {
-    id: 'abimbola-nova',
-    name: 'Abimbola Nova',
+    id: 'max-nova',
+    name: 'Max Nova',
     tagline: 'Visionary & High-Energy',
     tone: 'Bright, Radiant & Uplifting',
     description: 'Sparkling high-energy cadence that elevates motivation, highlights project milestones, and celebrates goal breakthroughs.',
@@ -176,6 +188,8 @@ export interface VoiceState {
   emotion: AgentEmotion;
   emotionDetails: EmotionDetails;
   lastEmotionReason: string;
+  emotionHistory: EmotionShiftItem[];
+  lastEmotionShiftTime: number;
 
   // AI-Generated Voice Profile State
   selectedProfileId: string;
@@ -202,7 +216,7 @@ class VoiceAgentService {
     isSupported: false,
     transcript: '',
     interimTranscript: '',
-    lastResponse: 'Abimbola Voice Assistant initialized. Say "Show visualizer", "Show tasks", or "Run loop".',
+    lastResponse: 'Max Voice Assistant initialized. Say "Show visualizer", "Show tasks", or "Run loop".',
     audioLevel: 0,
     mode: 'push-to-talk',
     isMuted: false,
@@ -220,7 +234,7 @@ class VoiceAgentService {
         timestamp: '2m ago',
         command: 'Check system status',
         intent: 'ACTION_STATUS_CHECK',
-        response: 'Abimbola System Health is at 98% optimal with Level 5 Gated Autonomy.',
+        response: 'Max System Health is at 98% optimal with Level 5 Gated Autonomy.',
         emotion: 'neutral',
       },
       {
@@ -252,9 +266,67 @@ class VoiceAgentService {
     emotion: 'neutral',
     emotionDetails: EMOTION_CONFIGS.neutral,
     lastEmotionReason: 'System initialized in neutral baseline equilibrium.',
+    lastEmotionShiftTime: Date.now() - 1000 * 60 * 2,
+    emotionHistory: [
+      {
+        id: 'shift-init-1',
+        timestamp: '09:58:12 AM',
+        rawTimestamp: Date.now() - 1000 * 60 * 24,
+        fromEmotion: 'neutral',
+        toEmotion: 'curious',
+        reason: 'Inquiry into active project topology and knowledge graph synergies.',
+        sentiment: 'analytical',
+        durationSeconds: 210,
+        triggerSource: 'voice_command',
+      },
+      {
+        id: 'shift-init-2',
+        timestamp: '10:02:40 AM',
+        rawTimestamp: Date.now() - 1000 * 60 * 18,
+        fromEmotion: 'curious',
+        toEmotion: 'focused',
+        reason: 'Autonomous reasoning loop engaged. Synthesizing AST validation katas.',
+        sentiment: 'analytical',
+        durationSeconds: 380,
+        triggerSource: 'system_event',
+      },
+      {
+        id: 'shift-init-3',
+        timestamp: '10:08:20 AM',
+        rawTimestamp: Date.now() - 1000 * 60 * 12,
+        fromEmotion: 'focused',
+        toEmotion: 'triumphant',
+        reason: 'Milestone reached: Challenge validation test suite passed with 100% verification.',
+        sentiment: 'positive',
+        durationSeconds: 240,
+        triggerSource: 'system_event',
+      },
+      {
+        id: 'shift-init-4',
+        timestamp: '10:12:15 AM',
+        rawTimestamp: Date.now() - 1000 * 60 * 7,
+        fromEmotion: 'triumphant',
+        toEmotion: 'alert',
+        reason: 'Context memory decay watchdog flagged 2 aging nodes requiring pin retention.',
+        sentiment: 'negative',
+        durationSeconds: 165,
+        triggerSource: 'sentiment_modulation',
+      },
+      {
+        id: 'shift-init-5',
+        timestamp: '10:15:00 AM',
+        rawTimestamp: Date.now() - 1000 * 60 * 2,
+        fromEmotion: 'alert',
+        toEmotion: 'neutral',
+        reason: 'Working memory refreshed and pinned. Returned to baseline cognitive equilibrium.',
+        sentiment: 'neutral',
+        durationSeconds: 120,
+        triggerSource: 'system_event',
+      },
+    ],
 
     // Voice Profile
-    selectedProfileId: 'abimbola-cyber-core',
+    selectedProfileId: 'max-cyber-core',
     selectedProfile: AI_VOICE_PROFILES[0],
     pitchMultiplier: 1.0,
     rateMultiplier: 1.0,
@@ -271,7 +343,7 @@ class VoiceAgentService {
 
       // Load saved preferences if available
       try {
-        const savedProfileId = localStorage.getItem('abimbola_voice_profile_id');
+        const savedProfileId = localStorage.getItem('max_voice_profile_id');
         if (savedProfileId) {
           const match = AI_VOICE_PROFILES.find((p) => p.id === savedProfileId);
           if (match) {
@@ -373,14 +445,42 @@ class VoiceAgentService {
   // --- Emotion State Modulation Engine ---
 
   /**
-   * Directly set Abimbola's emotion with an explanation
+   * Directly set Max's emotion with an explanation and record shift in the timeline log
    */
-  public setEmotion(emotion: AgentEmotion, reason?: string) {
+  public setEmotion(
+    emotion: AgentEmotion,
+    reason?: string,
+    triggerSource: EmotionShiftItem['triggerSource'] = 'sentiment_modulation'
+  ) {
+    const prevEmotion = this.state.emotion;
+    const now = Date.now();
+    const durationSeconds = Math.max(1, Math.round((now - (this.state.lastEmotionShiftTime || now)) / 1000));
+    const effectiveReason = reason || `Transitioned to ${EMOTION_CONFIGS[emotion].label}`;
+
     this.state.emotion = emotion;
     this.state.emotionDetails = EMOTION_CONFIGS[emotion];
-    if (reason) {
-      this.state.lastEmotionReason = reason;
-    }
+    this.state.lastEmotionReason = effectiveReason;
+    this.state.lastEmotionShiftTime = now;
+
+    // Record this shift event into emotionHistory timeline
+    const shiftEvent: EmotionShiftItem = {
+      id: `shift-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      rawTimestamp: now,
+      fromEmotion: prevEmotion,
+      toEmotion: emotion,
+      reason: effectiveReason,
+      sentiment: EMOTION_CONFIGS[emotion].sentiment,
+      durationSeconds,
+      triggerSource,
+    };
+
+    this.state.emotionHistory = [shiftEvent, ...(this.state.emotionHistory || []).slice(0, 39)];
+    this.notify();
+  }
+
+  public clearEmotionHistory() {
+    this.state.emotionHistory = [];
     this.notify();
   }
 
@@ -497,7 +597,7 @@ class VoiceAgentService {
     this.state.selectedProfileId = profile.id;
     this.state.selectedProfile = profile;
     try {
-      localStorage.setItem('abimbola_voice_profile_id', profile.id);
+      localStorage.setItem('max_voice_profile_id', profile.id);
     } catch (e) {
       // ignore
     }
@@ -707,7 +807,7 @@ class VoiceAgentService {
   }
 
   /**
-   * Process and execute spoken user commands for Abimbola
+   * Process and execute spoken user commands for Max
    */
   public handleVoiceInput(input: string) {
     const raw = input.trim();
@@ -803,7 +903,7 @@ class VoiceAgentService {
       lower.includes('start loop')
     ) {
       recognizedIntent = 'ACTION_RUN_LOOP';
-      reply = 'Abimbola triggering Level 5 autonomous reasoning loop. Verifying AST invariants and project continuity.';
+      reply = 'Max triggering Level 5 autonomous reasoning loop. Verifying AST invariants and project continuity.';
     } else if (
       lower.includes('status') ||
       lower.includes('health') ||
@@ -811,7 +911,7 @@ class VoiceAgentService {
       lower.includes('system check')
     ) {
       recognizedIntent = 'ACTION_STATUS_CHECK';
-      reply = 'Abimbola System Health is at 98% optimal. Level 5 Gated Autonomy active. 0 memory leaks. 3 active projects in working memory.';
+      reply = 'Max System Health is at 98% optimal. Level 5 Gated Autonomy active. 0 memory leaks. 3 active projects in working memory.';
     } else if (
       lower.includes('quick task') ||
       lower.includes('create task') ||
@@ -827,14 +927,14 @@ class VoiceAgentService {
       lower.includes('search commands')
     ) {
       recognizedIntent = 'ACTION_COMMAND_PALETTE';
-      reply = 'Opening Abimbola Command Palette.';
+      reply = 'Opening Max Command Palette.';
     } else if (
       lower.includes('urgent') ||
       lower.includes('critical') ||
       lower.includes('deadline')
     ) {
       recognizedIntent = 'ACTION_URGENT_TASKS';
-      reply = 'Abimbola analyzing task priorities. Showing highest urgency milestones first in the project dashboard.';
+      reply = 'Max analyzing task priorities. Showing highest urgency milestones first in the project dashboard.';
     } else if (
       lower.includes('memory decay') ||
       lower.includes('stale context') ||
@@ -842,7 +942,7 @@ class VoiceAgentService {
       lower.includes('pin memory')
     ) {
       recognizedIntent = 'NAV_ORCHESTRATOR';
-      reply = 'Abimbola opening Orchestrator Context Memory Decay Monitor. Showing 7 working context items and retention health.';
+      reply = 'Max opening Orchestrator Context Memory Decay Monitor. Showing 7 working context items and retention health.';
     } else if (
       lower.includes('cluster') ||
       lower.includes('knowledge cluster') ||
@@ -855,7 +955,7 @@ class VoiceAgentService {
       reply = 'Operating mode updated according to your voice command.';
     } else {
       recognizedIntent = 'AGENT_CHAT';
-      reply = `Understood: "${raw}". Abimbola Agentic Core has analyzed your instruction with Level 5 autonomy.`;
+      reply = `Understood: "${raw}". Max Agentic Core has analyzed your instruction with Level 5 autonomy.`;
     }
 
     // Add to command history (last 5 items)

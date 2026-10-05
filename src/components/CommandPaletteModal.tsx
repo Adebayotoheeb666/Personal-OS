@@ -43,7 +43,7 @@ interface CommandItem {
   id: string;
   title: string;
   description: string;
-  category: 'Workspaces' | 'Abimbola Operations' | 'Operating Modes' | 'Quick Tools';
+  category: 'Workspaces' | 'Max Operations' | 'Operating Modes' | 'Quick Tools';
   icon: React.ReactNode;
   keywords: string[];
   action: () => void;
@@ -185,12 +185,12 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         },
       },
 
-      // 2. Abimbola Operations
+      // 2. Max Operations
       {
         id: 'act-quick-task',
         title: 'Create Quick Task with Natural Language',
         description: 'Pipe natural language directly into Task Engine for scheduling',
-        category: 'Abimbola Operations',
+        category: 'Max Operations',
         icon: <Plus className="w-4 h-4 text-cyan-300" />,
         keywords: ['quick task', 'new task', 'add task', 'pipe', 'create task', 'schedule'],
         action: () => {
@@ -202,7 +202,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: 'act-trigger-loop',
         title: 'Trigger Level 5 Autonomous Reasoning Loop',
         description: 'Execute full-cycle AST verification & project continuity sync',
-        category: 'Abimbola Operations',
+        category: 'Max Operations',
         icon: <Zap className="w-4 h-4 text-amber-400" />,
         keywords: ['loop', 'autonomous loop', 'reasoning', 'ast', 'verify', 'continuity'],
         action: () => {
@@ -212,9 +212,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       },
       {
         id: 'act-voice-toggle',
-        title: 'Talk to Abimbola (Voice Commander)',
+        title: 'Talk to Max (Voice Commander)',
         description: 'Activate real-time Web Speech recognition and audio stream',
-        category: 'Abimbola Operations',
+        category: 'Max Operations',
         icon: <Mic className="w-4 h-4 text-rose-400" />,
         keywords: ['voice', 'speak', 'mic', 'microphone', 'listen', 'talk'],
         action: () => {
@@ -226,7 +226,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: 'act-system-status',
         title: 'System Health & Invariant Telemetry Check',
         description: 'Read out 98% system health, AST memory leaks, and Level 5 status',
-        category: 'Abimbola Operations',
+        category: 'Max Operations',
         icon: <Activity className="w-4 h-4 text-emerald-400" />,
         keywords: ['status', 'health', 'telemetry', 'check', 'invariants'],
         action: () => {
@@ -238,7 +238,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: 'act-pending-gates',
         title: 'Inspect Pending Human Approval Gates',
         description: `View ${proposals.filter((p) => p.approvalStatus === 'Proposed').length} proposals requiring signature`,
-        category: 'Abimbola Operations',
+        category: 'Max Operations',
         icon: <ShieldAlert className="w-4 h-4 text-amber-400" />,
         keywords: ['approvals', 'gates', 'signatures', 'pending'],
         action: () => {
@@ -250,9 +250,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: 'act-memory-decay',
         title: 'Context Memory Decay Monitor',
         description: 'View decaying working context, refresh retention, and pin critical memory anchors',
-        category: 'Abimbola Operations',
+        category: 'Max Operations',
         icon: <Brain className="w-4 h-4 text-indigo-400" />,
-        keywords: ['memory', 'decay', 'pin', 'refresh', 'context', 'stale', 'retention', 'abimbola focus'],
+        keywords: ['memory', 'decay', 'pin', 'refresh', 'context', 'stale', 'retention', 'max focus'],
         action: () => {
           onSelectTab('orchestrator');
           onClose();
@@ -263,7 +263,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: 'act-knowledge-clusters',
         title: 'Domain Knowledge Clusters (Recharts)',
         description: 'Force-directed node graph mapping multi-project relationship density',
-        category: 'Abimbola Operations',
+        category: 'Max Operations',
         icon: <Share2 className="w-4 h-4 text-cyan-400" />,
         keywords: ['cluster', 'knowledge cluster', 'density', 'recharts', 'force graph', 'relationship', 'graph'],
         action: () => {
@@ -278,7 +278,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: `voice-profile-${vp.id}`,
         title: `Select Voice Profile: ${vp.name}`,
         description: `${vp.tone} • ${vp.description.slice(0, 60)}...`,
-        category: 'Abimbola Operations' as const,
+        category: 'Max Operations' as const,
         icon: <Volume2 className="w-4 h-4 text-cyan-400" />,
         keywords: ['voice', 'profile', 'tts', 'speech', vp.name, vp.id, 'speech synthesis'],
         action: () => {
@@ -300,12 +300,12 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         id: `emotion-${em.emotion}`,
         title: `Set AgentEmotion: ${em.label}`,
         description: em.desc,
-        category: 'Abimbola Operations' as const,
+        category: 'Max Operations' as const,
         icon: <Sparkles className="w-4 h-4 text-amber-400" />,
         keywords: ['emotion', 'sentiment', em.emotion, em.label, 'avatar', 'appearance'],
         action: () => {
           voiceAgent.setEmotion(em.emotion, `User manually commanded ${em.label} emotion via Command Palette.`);
-          voiceAgent.speak(`Abimbola emotion transitioned to ${em.label}.`);
+          voiceAgent.speak(`Max emotion transitioned to ${em.label}.`);
           onClose();
         },
       }))),
@@ -320,7 +320,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
         keywords: ['mode', m.mode, m.label, m.desc],
         action: () => {
           setActiveMode(m.mode);
-          voiceAgent.speak(`Abimbola operating mode switched to ${m.label}.`);
+          voiceAgent.speak(`Max operating mode switched to ${m.label}.`);
           onClose();
         },
       })),
@@ -328,7 +328,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       // 4. Quick Tools
       {
         id: 'tool-toggle-mute',
-        title: 'Mute / Unmute Abimbola Voice',
+        title: 'Mute / Unmute Max Voice',
         description: 'Toggle speech synthesis sound output',
         category: 'Quick Tools',
         icon: <Volume2 className="w-4 h-4 text-cyan-400" />,
@@ -515,7 +515,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
           <div className="flex items-center space-x-1 text-cyan-400">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="font-semibold text-[10px]">Abimbola Command Palette</span>
+            <span className="font-semibold text-[10px]">Max Command Palette</span>
           </div>
         </div>
       </div>

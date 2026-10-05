@@ -119,7 +119,7 @@ export const AgentAvatar: React.FC<AgentAvatarProps> = ({
       className={`relative inline-flex items-center justify-center select-none ${
         interactive ? 'cursor-pointer group' : ''
       }`}
-      title={`Abimbola (Autonomous Agentic AI) • State: ${emotionConfig.label} (${currentState.lastEmotionReason})`}
+      title={`Max (Autonomous Agentic AI) • State: ${emotionConfig.label} (${currentState.lastEmotionReason})`}
     >
       {/* Outer Holographic Ambient Aura */}
       <motion.div

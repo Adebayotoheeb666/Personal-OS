@@ -159,13 +159,13 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({
     setScheduledTaskObj({ ...taskToSchedule, id: `task-${Date.now()}` });
     setIsScheduled(true);
 
-    // Audio & voice confirmation with emotion modulation by Abimbola
+    // Audio & voice confirmation with emotion modulation by Max
     voiceAgent.analyzeSentimentAndSetEmotion(naturalInput, 'user');
     voiceAgent.setEmotion(
       parsedTask.priority === 'critical' ? 'alert' : 'triumphant',
       `Scheduled ${parsedTask.priority} urgency task: "${parsedTask.objective}".`
     );
-    const confirmationSpeech = `Abimbola has scheduled task: "${parsedTask.objective}" under ${parsedTask.projectName} with ${parsedTask.priority} priority assigned to ${parsedTask.owner}.`;
+    const confirmationSpeech = `Max has scheduled task: "${parsedTask.objective}" under ${parsedTask.projectName} with ${parsedTask.priority} priority assigned to ${parsedTask.owner}.`;
     voiceAgent.speak(confirmationSpeech);
   };
 
@@ -204,7 +204,7 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">
-                Type natural language instructions. Abimbola will parse, attribute, and schedule them into Task Engine.
+                Type natural language instructions. Max will parse, attribute, and schedule them into Task Engine.
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({
                   Task Successfully Scheduled in Task Engine!
                 </h4>
                 <p className="text-xs text-slate-300 mt-1">
-                  Abimbola has synchronized your task to persistent memory with Level 5 safeguards.
+                  Max has synchronized your task to persistent memory with Level 5 safeguards.
                 </p>
                 <div className="mt-2.5 p-2 rounded-lg bg-slate-900/90 border border-slate-800 text-xs space-y-1">
                   <p className="text-white font-semibold">"{scheduledTaskObj?.objective}"</p>
@@ -326,7 +326,7 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({
                 <div className="flex items-center justify-between text-[11px] font-bold border-b border-slate-800/80 pb-1.5">
                   <span className="text-cyan-300 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Abimbola Live Interpretation Preview</span>
+                    <span>Max Live Interpretation Preview</span>
                   </span>
                   <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 uppercase font-mono text-[9px]">
                     Ready to Pipe

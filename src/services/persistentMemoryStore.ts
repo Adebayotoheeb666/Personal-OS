@@ -338,6 +338,51 @@ class PersistentMemoryStore {
     return task;
   }
 
+  /**
+   * Updates dependencies for a task (array of predecessor task IDs)
+   */
+  public updateTaskDependencies(taskId: string, dependencies: string[]): ProjectTask | null {
+    const start = performance.now();
+    const tasks = this.getTasks();
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return null;
+
+    // Filter out self-dependencies
+    task.dependencies = Array.from(new Set(dependencies.filter((d) => d && d !== taskId)));
+    this.upsertTask(task);
+    this.logQuery('UPDATE pg_tasks SET dependencies = $1 WHERE id = $2;', [task.dependencies, taskId], 1, performance.now() - start);
+    return task;
+  }
+
+  /**
+   * Links a predecessor task dependency to a target task
+   */
+  public linkTaskDependency(taskId: string, dependsOnTaskId: string): ProjectTask | null {
+    if (taskId === dependsOnTaskId) return null;
+    const task = this.getTasks().find((t) => t.id === taskId);
+    if (!task) return null;
+
+    const currentDeps = task.dependencies || [];
+    if (!currentDeps.includes(dependsOnTaskId)) {
+      return this.updateTaskDependencies(taskId, [...currentDeps, dependsOnTaskId]);
+    }
+    return task;
+  }
+
+  /**
+   * Unlinks a predecessor task dependency from a target task
+   */
+  public unlinkTaskDependency(taskId: string, dependsOnTaskId: string): ProjectTask | null {
+    const task = this.getTasks().find((t) => t.id === taskId);
+    if (!task) return null;
+
+    const currentDeps = task.dependencies || [];
+    return this.updateTaskDependencies(
+      taskId,
+      currentDeps.filter((d) => d !== dependsOnTaskId)
+    );
+  }
+
   public deleteTask(taskId: string): void {
     const start = performance.now();
     const tasks = this.getTasks().filter((t) => t.id !== taskId);

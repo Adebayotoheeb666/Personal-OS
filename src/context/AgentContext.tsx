@@ -225,6 +225,9 @@ interface AgentContextType {
   updateTaskUrgency: (taskId: string, urgency: UrgencyLevel) => void;
   updateTaskPriority: (taskId: string, priority: ProjectTask['priority']) => void;
   updateTaskColorCode: (taskId: string, colorCode: string) => void;
+  updateTaskDependencies: (taskId: string, dependencies: string[]) => void;
+  linkTaskDependency: (taskId: string, dependsOnTaskId: string) => void;
+  unlinkTaskDependency: (taskId: string, dependsOnTaskId: string) => void;
   sortTasksByUrgency: (tasks: ProjectTask[]) => ProjectTask[];
   createTask: (task: Omit<ProjectTask, 'id'>) => void;
   addDecision: (decision: Omit<DecisionRecord, 'id' | 'date'>) => void;
@@ -851,6 +854,63 @@ ${targetProject.tasks
     addAuditLog('User', 'UPDATE_TASK_COLOR', taskId, 'production', 'success', `Task color-coded as ${colorCode}`);
   };
 
+  const updateTaskDependencies = (taskId: string, dependencies: string[]) => {
+    const updated = persistentMemoryStore.updateTaskDependencies(taskId, dependencies);
+    if (!updated) return;
+
+    setWorldModel((prev) => {
+      const updatedProjects = prev.projects.map((proj) => {
+        if (!proj.tasks.some((t) => t.id === taskId)) return proj;
+        const updatedTasks = proj.tasks.map((t) => (t.id === taskId ? updated : t));
+        const updatedProj = { ...proj, tasks: updatedTasks };
+        memoryCacheService.updateProjectEntity(updatedProj);
+        return updatedProj;
+      });
+      return { ...prev, projects: updatedProjects };
+    });
+
+    refreshDatabaseStats();
+    addAuditLog('User', 'UPDATE_TASK_DEPENDENCIES', taskId, 'production', 'success', `Dependencies updated: ${dependencies.join(', ') || 'None'}`);
+  };
+
+  const linkTaskDependency = (taskId: string, dependsOnTaskId: string) => {
+    const updated = persistentMemoryStore.linkTaskDependency(taskId, dependsOnTaskId);
+    if (!updated) return;
+
+    setWorldModel((prev) => {
+      const updatedProjects = prev.projects.map((proj) => {
+        if (!proj.tasks.some((t) => t.id === taskId)) return proj;
+        const updatedTasks = proj.tasks.map((t) => (t.id === taskId ? updated : t));
+        const updatedProj = { ...proj, tasks: updatedTasks };
+        memoryCacheService.updateProjectEntity(updatedProj);
+        return updatedProj;
+      });
+      return { ...prev, projects: updatedProjects };
+    });
+
+    refreshDatabaseStats();
+    addAuditLog('User', 'LINK_TASK_DEPENDENCY', taskId, 'production', 'success', `Task ${taskId} linked to depend on ${dependsOnTaskId}`);
+  };
+
+  const unlinkTaskDependency = (taskId: string, dependsOnTaskId: string) => {
+    const updated = persistentMemoryStore.unlinkTaskDependency(taskId, dependsOnTaskId);
+    if (!updated) return;
+
+    setWorldModel((prev) => {
+      const updatedProjects = prev.projects.map((proj) => {
+        if (!proj.tasks.some((t) => t.id === taskId)) return proj;
+        const updatedTasks = proj.tasks.map((t) => (t.id === taskId ? updated : t));
+        const updatedProj = { ...proj, tasks: updatedTasks };
+        memoryCacheService.updateProjectEntity(updatedProj);
+        return updatedProj;
+      });
+      return { ...prev, projects: updatedProjects };
+    });
+
+    refreshDatabaseStats();
+    addAuditLog('User', 'UNLINK_TASK_DEPENDENCY', taskId, 'production', 'success', `Task ${taskId} unlinked from dependency ${dependsOnTaskId}`);
+  };
+
   const sortTasksByUrgency = (tasksList: ProjectTask[]): ProjectTask[] => {
     const priorityWeight: Record<string, number> = {
       critical: 4,
@@ -1171,6 +1231,9 @@ ${targetProject.tasks
         updateTaskUrgency,
         updateTaskPriority,
         updateTaskColorCode,
+        updateTaskDependencies,
+        linkTaskDependency,
+        unlinkTaskDependency,
         sortTasksByUrgency,
         createTask,
         addDecision,

@@ -16,9 +16,18 @@ import {
   Tag,
   Check,
   RefreshCw,
+  Calendar,
+  LayoutGrid,
+  Columns,
+  TrendingUp,
+  BarChart2,
+  Search,
+  X,
 } from 'lucide-react';
 import { useAgent } from '../context/AgentContext';
 import { ProjectTask } from '../types/agent';
+import { TaskGanttTimeline } from './TaskGanttTimeline';
+import { TaskProductivityStats } from './TaskProductivityStats';
 
 // Palette options for custom task color-coding
 const COLOR_OPTIONS: { id: string; name: string; bgClass: string; borderClass: string; dotClass: string }[] = [
@@ -47,7 +56,10 @@ export const TaskEngineView: React.FC<{
   const [filterProject, setFilterProject] = useState<string>('all');
   const [filterState, setFilterState] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'priority' | 'urgency' | 'deadline' | 'effort' | 'state'>('priority');
+  const [viewPerspective, setViewPerspective] = useState<'timeline' | 'cards' | 'both'>('timeline');
+  const [showStats, setShowStats] = useState<boolean>(true);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [activeColorPickerTaskId, setActiveColorPickerTaskId] = useState<string | null>(null);
 
@@ -94,10 +106,31 @@ export const TaskEngineView: React.FC<{
 
   // Filtered and Sorted Tasks
   const displayedTasks = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     const filtered = allTasks.filter((task) => {
       if (filterProject !== 'all' && task.projectId !== filterProject) return false;
       if (filterState !== 'all' && task.currentState !== filterState) return false;
       if (filterPriority !== 'all' && task.priority !== filterPriority) return false;
+
+      if (q) {
+        const project = worldModel.projects.find((p) => p.id === task.projectId);
+        const projectName = project ? project.name.toLowerCase() : '';
+        const nameMatch = task.objective.toLowerCase().includes(q);
+        const statusMatch =
+          task.currentState.toLowerCase().includes(q) ||
+          task.currentState.replace(/_/g, ' ').toLowerCase().includes(q);
+        const priorityMatch = task.priority.toLowerCase().includes(q);
+        const tagMatch =
+          (task.requiredResources || []).some((r) => r.toLowerCase().includes(q)) ||
+          (task.owner && task.owner.toLowerCase().includes(q)) ||
+          (task.colorCode && task.colorCode.toLowerCase().includes(q)) ||
+          projectName.includes(q);
+
+        if (!nameMatch && !statusMatch && !priorityMatch && !tagMatch) {
+          return false;
+        }
+      }
+
       return true;
     });
 
@@ -227,6 +260,62 @@ export const TaskEngineView: React.FC<{
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* View Perspective Switcher */}
+          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setViewPerspective('timeline')}
+              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer ${
+                viewPerspective === 'timeline'
+                  ? 'bg-cyan-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Gantt Timeline</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewPerspective('both')}
+              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer ${
+                viewPerspective === 'both'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Columns className="w-3.5 h-3.5" />
+              <span>Dual View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewPerspective('cards')}
+              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer ${
+                viewPerspective === 'cards'
+                  ? 'bg-purple-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Cards Grid</span>
+            </button>
+          </div>
+
+          {/* 30-Day Productivity Stats Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setShowStats((s) => !s)}
+            className={`px-3 py-1.5 rounded-xl border flex items-center space-x-1.5 text-xs font-bold transition cursor-pointer ${
+              showStats
+                ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-300 shadow-sm'
+                : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+            }`}
+            title="Toggle 30-Day Productivity Trends & Completion Rates (Recharts)"
+          >
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+            <span>30d Stats</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          </button>
+
           {/* Direct Link to Project Dashboard Sorted by Urgency */}
           {onNavigateToTab && (
             <button
@@ -235,7 +324,7 @@ export const TaskEngineView: React.FC<{
               className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-red-600 via-amber-600 to-indigo-600 hover:from-red-500 hover:to-indigo-500 text-white font-semibold text-xs flex items-center space-x-1.5 transition cursor-pointer shadow-md shadow-red-600/20"
             >
               <Zap className="w-3.5 h-3.5 text-amber-200" />
-              <span>Sort Project Dashboard by Urgency &rarr;</span>
+              <span>Sort Dashboard &rarr;</span>
             </button>
           )}
 
@@ -244,11 +333,26 @@ export const TaskEngineView: React.FC<{
             className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center space-x-1.5 transition cursor-pointer shadow-sm shadow-indigo-600/20"
           >
             <Plus className="w-4 h-4" />
-            <span>Create Structured Task</span>
+            <span>Create Task</span>
           </button>
         </div>
       </div>
 
+      {/* 30-Day Completion Rates & Productivity Trends (Recharts Summary Stats) */}
+      {showStats && (
+        <TaskProductivityStats tasks={allTasks} />
+      )}
+
+      {/* Visual Gantt-Style Timeline with Drag-and-Drop Re-prioritizing */}
+      {(viewPerspective === 'timeline' || viewPerspective === 'both') && (
+        <TaskGanttTimeline
+          tasks={allTasks}
+          onNavigateToTab={onNavigateToTab}
+        />
+      )}
+
+      {(viewPerspective === 'cards' || viewPerspective === 'both') && (
+        <div className="space-y-4">
       {/* Priority System Interactive Legend & Quick Filter Bar */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -620,6 +724,8 @@ export const TaskEngineView: React.FC<{
           );
         })}
       </div>
+      </div>
+      )}
 
       {/* Create Task Modal */}
       {showCreateModal && (

@@ -714,7 +714,7 @@ export const KnowledgeClusterGraph: React.FC = () => {
                 </span>
               </div>
               <span className="text-[10px] text-slate-500">
-                Click any domain bubble to focus Abimbola &amp; inspect relationship telemetry
+                Click any domain bubble to focus Max &amp; inspect relationship telemetry
               </span>
             </div>
           </div>
@@ -801,12 +801,12 @@ export const KnowledgeClusterGraph: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  voiceAgent.speak(`Focusing Abimbola on ${selectedNode.name} knowledge cluster.`);
+                  voiceAgent.speak(`Focusing Max on ${selectedNode.name} knowledge cluster.`);
                 }}
                 className="w-full px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center space-x-1.5 shadow-md shadow-cyan-600/20"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Focus Abimbola on Cluster</span>
+                <span>Focus Max on Cluster</span>
               </button>
             </div>
           </div>

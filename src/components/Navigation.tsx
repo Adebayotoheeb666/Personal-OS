@@ -26,6 +26,7 @@ import {
   ArrowLeft,
   Plus,
   Command,
+  History,
 } from 'lucide-react';
 import { useAgent } from '../context/AgentContext';
 import { OperatingMode, SpecialistAgentType } from '../types/agent';
@@ -49,6 +50,7 @@ interface NavigationProps {
   onSelectTab: (tab: ActiveTab) => void;
   onOpenCommandPalette?: () => void;
   onOpenQuickTask?: () => void;
+  onOpenTranscriptSidebar?: () => void;
 }
 
 export const OPERATING_MODES: { mode: OperatingMode; label: string; icon: string; desc: string }[] = [
@@ -64,13 +66,14 @@ export const OPERATING_MODES: { mode: OperatingMode; label: string; icon: string
 ];
 
 /**
- * Tactile Left Sidebar Rail with Abimbola branding
+ * Tactile Left Sidebar Rail with Max branding
  */
 export const SidebarRail: React.FC<NavigationProps> = ({
   currentTab,
   onSelectTab,
   onOpenCommandPalette,
   onOpenQuickTask,
+  onOpenTranscriptSidebar,
 }) => {
   const {
     worldModel,
@@ -93,14 +96,14 @@ export const SidebarRail: React.FC<NavigationProps> = ({
   return (
     <aside className="w-64 flex-shrink-0 hidden lg:flex flex-col justify-between p-3.5 bg-slate-900/90 border-r border-slate-800/80 backdrop-blur-xl select-none h-screen overflow-hidden shadow-[4px_0_30px_rgba(0,0,0,0.5)]">
       <div className="space-y-3.5 overflow-y-auto no-scrollbar pr-0.5">
-        {/* User Identity & Abimbola Agent Card */}
+        {/* User Identity & Max Agent Card */}
         <div className="p-3 rounded-2xl bg-gradient-to-b from-slate-800/80 to-slate-950/90 border border-slate-700/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_20px_rgba(0,0,0,0.4)] flex items-center space-x-3">
           <AgentAvatar size="sm" isThinking={isThinking} />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center space-x-1">
               <h3 className="text-xs font-bold text-white truncate tracking-tight">
-                Abimbola
+                Max
               </h3>
               <span className="text-xs">⚡</span>
             </div>
@@ -136,6 +139,24 @@ export const SidebarRail: React.FC<NavigationProps> = ({
             </button>
           )}
         </div>
+
+        {/* Voice Transcripts History Button */}
+        {onOpenTranscriptSidebar && (
+          <button
+            type="button"
+            onClick={onOpenTranscriptSidebar}
+            className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 hover:border-cyan-500/40 text-slate-300 text-[10px] font-semibold transition cursor-pointer"
+            title="Open Voice Transcripts History Log"
+          >
+            <div className="flex items-center space-x-1.5">
+              <History className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Voice Transcripts</span>
+            </div>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">
+              {voiceAgent.state.commandHistory.length}
+            </span>
+          </button>
+        )}
 
         {/* Primary Holographic Visualizer Tab Button */}
         <div className="pt-0.5">
@@ -249,7 +270,7 @@ export const SidebarRail: React.FC<NavigationProps> = ({
         <div className="flex items-center justify-between text-cyan-300 font-black text-xs uppercase tracking-wider">
           <div className="flex items-center space-x-1.5">
             <ShieldCheck className="w-4 h-4 text-cyan-400" />
-            <span>Abimbola &bull; Level 5</span>
+            <span>Max &bull; Level 5</span>
           </div>
           <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono">
             Active
@@ -262,7 +283,7 @@ export const SidebarRail: React.FC<NavigationProps> = ({
           className="mt-2 w-full py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-cyan-600/20 cursor-pointer transition flex items-center justify-center space-x-1.5"
         >
           <Radio className="w-3.5 h-3.5 text-cyan-200 animate-pulse" />
-          <span>Speak to Abimbola</span>
+          <span>Speak to Max</span>
         </button>
       </div>
     </aside>
@@ -313,6 +334,7 @@ export const TopNavigation: React.FC<NavigationProps> = ({
   onSelectTab,
   onOpenCommandPalette,
   onOpenQuickTask,
+  onOpenTranscriptSidebar,
 }) => {
   const {
     worldModel,
@@ -349,14 +371,14 @@ export const TopNavigation: React.FC<NavigationProps> = ({
             <div
               onClick={() => onSelectTab('visualizer')}
               className="flex items-center space-x-2.5 cursor-pointer group"
-              title="Abimbola - Return to Holographic Visualizer"
+              title="Max - Return to Holographic Visualizer"
             >
               <AgentAvatar size="sm" isThinking={isThinking} />
 
               <div>
                 <div className="flex items-center space-x-1.5">
                   <span className="font-black text-sm sm:text-base text-white tracking-tight group-hover:text-cyan-200 transition">
-                    Abimbola
+                    Max
                   </span>
                   <span className="text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
                     Agentic AI
@@ -394,6 +416,22 @@ export const TopNavigation: React.FC<NavigationProps> = ({
               >
                 <Plus className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Quick Task</span>
+              </button>
+            )}
+
+            {/* Voice Transcripts Header Button */}
+            {onOpenTranscriptSidebar && (
+              <button
+                type="button"
+                onClick={onOpenTranscriptSidebar}
+                className="hidden xl:flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-white transition cursor-pointer text-xs"
+                title="Open Live Voice Transcripts Log"
+              >
+                <History className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="text-[11px] font-semibold">Transcripts</span>
+                <span className="text-[9px] font-mono px-1 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">
+                  {voiceAgent.state.commandHistory.length}
+                </span>
               </button>
             )}
 
@@ -455,7 +493,7 @@ export const TopNavigation: React.FC<NavigationProps> = ({
               type="button"
               onClick={() => runAutonomousLoop('Execute full-cycle autonomous review and sync')}
               disabled={isThinking}
-              title="Run Abimbola autonomous reasoning loop"
+              title="Run Max autonomous reasoning loop"
               className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs font-bold transition shadow-sm flex items-center space-x-1 cursor-pointer disabled:opacity-50"
             >
               <Zap className="w-3.5 h-3.5 text-cyan-200" />
